@@ -1,12 +1,15 @@
 package com.ogs.autograde.services;
 
 
+import com.ogs.autograde.DTO.QuestionsResponse;
 import com.ogs.autograde.Repository.QuestionsRepository;
 import com.ogs.autograde.models.Questions;
 import lombok.Setter;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -34,5 +37,15 @@ public class QuestionsServices {
         questions.setAnswer(answer);
         questions.setPhoto(imageFile.getBytes());
         return questionsRepository.save(questions);
+    }
+
+    public List<QuestionsResponse> getAllQuestions() {
+        List<QuestionsResponse> questionsResponseList = new ArrayList<>();
+        List<Questions> questionsList = questionsRepository.findAll();
+        for(Questions questions : questionsList)
+        {
+            questionsResponseList.add(new QuestionsResponse(questions.getAnswer(),"http://localhost:8080/questions/" + questions.getId() + "/image",questions.getQuestion()));
+        }
+        return questionsResponseList;
     }
 }

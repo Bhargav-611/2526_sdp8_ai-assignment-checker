@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping("/questions")
@@ -28,6 +29,12 @@ public class QuestionsController {
     public String Demo()
     {
         return "Controller work fine";
+    }
+
+    @GetMapping("/")
+    public ResponseEntity<List<QuestionsResponse>> getAllQuestions()
+    {
+        return ResponseEntity.ok(questionsServices.getAllQuestions());
     }
 
     @GetMapping("/{id}")
