@@ -25,7 +25,6 @@ public class FacultyQuesAns extends BaseModel{
     @JoinColumn(name = "fqa_fclt_id")
     private Faculty faculty;
 
-
     @OneToMany(mappedBy = "facultyQuesAns",cascade = CascadeType.ALL,fetch = FetchType.LAZY)
     private List<StudentQuesAns> studentQuesAnsList;
 

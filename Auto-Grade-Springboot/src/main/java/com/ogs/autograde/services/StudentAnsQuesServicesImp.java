@@ -9,35 +9,35 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.ogs.autograde.models.StudentQuesAns;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
-public class QuestionsServices {
+public class StudentAnsQuesServicesImp implements IStudentQuesAnsServices{
 
-    final private StudentQuesAnsRepo questionsRepository;
+    final private StudentQuesAnsRepo studentQuesAnsRepo;
 
-    public QuestionsServices(StudentQuesAnsRepo questionsRepository) {
-        this.questionsRepository = questionsRepository;
+    public StudentAnsQuesServicesImp(StudentQuesAnsRepo studentQuesAnsRepo) {
+        this.studentQuesAnsRepo = studentQuesAnsRepo;
     }
 
-    public com.ogs.autograde.models.StudentQuesAns findById(Long id)
+    public StudentQuesAns findById(Long id)
     {
-        Optional<com.ogs.autograde.models.StudentQuesAns> questions = questionsRepository.findById(id);
+        Optional<StudentQuesAns> questions = studentQuesAnsRepo.findById(id);
         return questions.orElse(null);
     }
-
-    public com.ogs.autograde.models.StudentQuesAns createQuestion(String question, String answer, MultipartFile imageFile) throws IOException {
-        com.ogs.autograde.models.StudentQuesAns studentQuesAns = new com.ogs.autograde.models.StudentQuesAns();
+    public StudentQuesAns createQuestion(String question, String answer, MultipartFile imageFile) throws IOException {
+        StudentQuesAns studentQuesAns = new com.ogs.autograde.models.StudentQuesAns();
         studentQuesAns.setQuestion(question);
         studentQuesAns.setAnswer(answer);
         studentQuesAns.setPhoto(imageFile.getBytes());
-        return questionsRepository.save(studentQuesAns);
+        return studentQuesAnsRepo.save(studentQuesAns);
     }
 
     public List<QuestionsResponse> getAllQuestions() {
         List<QuestionsResponse> questionsResponseList = new ArrayList<>();
-        List<com.ogs.autograde.models.StudentQuesAns> studentQuesAnsList = questionsRepository.findAll();
+        List<com.ogs.autograde.models.StudentQuesAns> studentQuesAnsList = studentQuesAnsRepo.findAll();
         for(com.ogs.autograde.models.StudentQuesAns studentQuesAns : studentQuesAnsList)
         {
             questionsResponseList.add(new QuestionsResponse(studentQuesAns.getAnswer(),"http://localhost:8080/questions/" + studentQuesAns.getId() + "/image", studentQuesAns.getQuestion()));
