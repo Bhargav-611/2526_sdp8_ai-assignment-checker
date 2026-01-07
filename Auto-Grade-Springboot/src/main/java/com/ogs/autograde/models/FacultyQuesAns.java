@@ -28,4 +28,9 @@ public class FacultyQuesAns extends BaseModel{
     @OneToMany(mappedBy = "facultyQuesAns",cascade = CascadeType.ALL,fetch = FetchType.LAZY)
     private List<StudentQuesAns> studentQuesAnsList;
 
+    public void addStudentQuesAns(StudentQuesAns studentQuesAns)
+    {
+        studentQuesAnsList.add(studentQuesAns);
+        studentQuesAns.setFacultyQuesAns(this);
+    }
 }

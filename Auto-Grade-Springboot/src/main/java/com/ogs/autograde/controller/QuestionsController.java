@@ -1,7 +1,9 @@
 package com.ogs.autograde.controller;
+import com.ogs.autograde.DTO.ImageModel;
 import com.ogs.autograde.DTO.QuestionsResponse;
 import com.ogs.autograde.models.StudentQuesAns;
 import com.ogs.autograde.services.IStudentQuesAnsServices;
+import com.ogs.autograde.services.ImageService;
 import com.ogs.autograde.services.StudentAnsQuesServicesImp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -11,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/questions")
@@ -18,6 +21,9 @@ import java.util.List;
 public class QuestionsController {
 
     final private IStudentQuesAnsServices iStudentQuesAnsServices;
+
+    @Autowired
+    private ImageService imageService;
 
     public QuestionsController(@Autowired IStudentQuesAnsServices iStudentQuesAnsServices) {
         this.iStudentQuesAnsServices = iStudentQuesAnsServices;
@@ -48,19 +54,19 @@ public class QuestionsController {
         return ResponseEntity.notFound().build();
     }
 
-    @GetMapping(value = "/{id}/image",produces = MediaType.IMAGE_JPEG_VALUE)
-    public byte[] getimage(@PathVariable("id")Long id)
-    {
-        StudentQuesAns studentQuesAns = iStudentQuesAnsServices.findById(id);
-        if(studentQuesAns != null)
-        {
-            return studentQuesAns.getPhoto();
-        }
-        else
-        {
-            return null;
-        }
-    }
+//    @GetMapping(value = "/{id}/image",produces = MediaType.IMAGE_JPEG_VALUE)
+//    public byte[] getimage(@PathVariable("id")Long id)
+//    {
+//        StudentQuesAns studentQuesAns = iStudentQuesAnsServices.findById(id);
+//        if(studentQuesAns != null)
+//        {
+//            return studentQuesAns.getPhoto();
+//        }
+//        else
+//        {
+//            return null;
+//        }
+//    }
 
     @PostMapping("/")
     public ResponseEntity<StudentQuesAns> createQuestion(@RequestParam("question")String question, @RequestParam("answer") String answer, @RequestParam("image")MultipartFile file) throws IOException {
@@ -74,6 +80,18 @@ public class QuestionsController {
         else
         {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+
+
+    @PostMapping("/upload")
+    public ResponseEntity<Map> upload(ImageModel imageModel) {
+        try {
+            return imageService.uploadImage(imageModel);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 }

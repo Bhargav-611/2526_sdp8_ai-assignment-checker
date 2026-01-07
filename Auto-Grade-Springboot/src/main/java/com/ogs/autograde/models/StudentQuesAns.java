@@ -24,8 +24,9 @@ public class StudentQuesAns extends BaseModel{
     @Column(nullable = false)
     private String question;
 
-    @Lob
-    private byte[] photo;
+    @OneToOne(cascade=CascadeType.ALL)
+    @JoinColumn(name = "image_id")
+    private Image photo;
 
     @ManyToOne()
     @JoinColumn(name = "sqa_stu_id")

@@ -31,7 +31,7 @@ public class StudentAnsQuesServicesImp implements IStudentQuesAnsServices{
         StudentQuesAns studentQuesAns = new com.ogs.autograde.models.StudentQuesAns();
         studentQuesAns.setQuestion(question);
         studentQuesAns.setAnswer(answer);
-        studentQuesAns.setPhoto(imageFile.getBytes());
+//        studentQuesAns.setPhoto(imageFile.getBytes());
         return studentQuesAnsRepo.save(studentQuesAns);
     }
 
