@@ -17,6 +17,12 @@ public class Student extends BaseModel{
     private String name;
 
     @OneToMany(mappedBy = "student",cascade = CascadeType.ALL,fetch = FetchType.LAZY)
-    List<StudentQuesAns> studentQuesAnsList;
+    private List<StudentQuesAns> studentQuesAnsList;
+
+    public void AddstudentQuesAnsList(StudentQuesAns studentQuesAns)
+    {
+        studentQuesAnsList.add(studentQuesAns);
+        studentQuesAns.setStudent(this);
+    }
 
 }

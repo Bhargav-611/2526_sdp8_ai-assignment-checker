@@ -19,22 +19,25 @@ public class ImageServiceImpl implements ImageService {
 
 
     @Override
-    public ResponseEntity<Map> uploadImage(ImageModel imageModel) {
+    public Image uploadImage(ImageModel imageModel) {
         try {
             if (imageModel.getName().isEmpty()) {
-                return ResponseEntity.badRequest().build();
+                return null;
+//                return ResponseEntity.badRequest().build();
             }
             if (imageModel.getFile().isEmpty()) {
-                return ResponseEntity.badRequest().build();
+                return null;
+//                return ResponseEntity.badRequest().build();
             }
             Image image = new Image();
             image.setName(imageModel.getName());
             image.setUrl(cloudinaryService.uploadFile(imageModel.getFile(), "folder_1"));
             if(image.getUrl() == null) {
-                return ResponseEntity.badRequest().build();
+                return null;
+//                return ResponseEntity.badRequest().build();
             }
             imageRepository.save(image);
-            return ResponseEntity.ok().body(Map.of("url", image.getUrl()));
+            return image;
         } catch (Exception e) {
             e.printStackTrace();
             return null;

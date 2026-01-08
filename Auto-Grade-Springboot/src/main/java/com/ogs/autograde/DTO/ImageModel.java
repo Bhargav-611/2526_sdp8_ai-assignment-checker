@@ -7,4 +7,9 @@ import org.springframework.web.multipart.MultipartFile;
 public class ImageModel {
     private String name;
     private MultipartFile file;
+
+    public ImageModel(String name, MultipartFile image) {
+        this.name = name;
+        this.file = image;
+    }
 }
