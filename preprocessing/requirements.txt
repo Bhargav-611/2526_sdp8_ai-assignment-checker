@@ -1,3 +1,6 @@
+numpy
+matplotlib
+
 fastapi
 uvicorn
 transformers
