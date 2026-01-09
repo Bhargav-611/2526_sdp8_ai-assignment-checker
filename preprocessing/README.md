@@ -1,4 +1,8 @@
+## 🛠️ Setup & Run Instructions
+
+Create Virtual Environment
 python -m venv venv
+
 
 Windows
 venv\Scripts\activate
