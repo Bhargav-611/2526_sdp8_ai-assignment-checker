@@ -1,14 +1,12 @@
 from openai import OpenAI
 import re
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
-# 🔐 Make sure to set API key in environment variable or here for testing
-client = OpenAI(api_key="YOUR_OPENAI_API_KEY")
-
-
-# -----------------------------
-# OpenAI Evaluation Function
-# -----------------------------
 def openai_evaluate(question, model_ans, student_ans):
     prompt = f"""
 Evaluate the student answer strictly based on correctness and meaning.
@@ -43,7 +41,7 @@ Reason: <one sentence>
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
-        return f"Accuracy: 0\nReason: OpenAI error - {e}"
+        return f"Accuracy: 0\nReason: OpenAI error - {e}"   
 
 
 # -----------------------------
@@ -70,40 +68,13 @@ def calculate_marks(accuracy, max_marks):
         return 0
 
 
-# -----------------------------
-# Example Question
-# -----------------------------
-question = "What is Machine Learning?"
-max_marks = 6  # Question total marks
-
-
-model_ans = (
-    "Machine learning is a branch of artificial intelligence that enables "
-    "computers to learn patterns from data and make decisions without being "
-    "explicitly programmed."
-)
-
-
-student_ans = (
-    ''' "Machine learning is a branch of artificial intelligence that enables "
-    "computers to learn patterns from data and make decisions without being "
-    "explicitly programmed."'''
-    )
-
-
-# -----------------------------
-# Run AI Evaluation
-# -----------------------------
-ai_response = openai_evaluate(question, model_ans, student_ans)
-accuracy = extract_accuracy(ai_response)
-marks = calculate_marks(accuracy, max_marks)
-
-
-# -----------------------------
-# Final Output
-# -----------------------------
-print("AI Response:\n", ai_response)
-print(f"Calculated Marks: {marks}/{max_marks}")
-
-
+def evaluattion_pipeline(question, model_ans, student_ans, max_marks):
+    # -----------------------------
+    # Run AI Evaluation
+    # -----------------------------
+    ai_response = openai_evaluate(question, model_ans, student_ans)
+    accuracy = extract_accuracy(ai_response)
+    marks = calculate_marks(accuracy, max_marks)
+    
+    return ai_response, marks, accuracy
 
