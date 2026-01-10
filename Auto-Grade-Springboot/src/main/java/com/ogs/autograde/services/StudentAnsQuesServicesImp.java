@@ -5,13 +5,10 @@ package com.ogs.autograde.services;
 import com.ogs.autograde.DTO.ApiResponse;
 import com.ogs.autograde.DTO.CreateStudentQADto;
 import com.ogs.autograde.DTO.ImageModel;
-import com.ogs.autograde.DTO.QuestionsResponse;
 import com.ogs.autograde.Repository.FacultyQuesAnsRepo;
 import com.ogs.autograde.Repository.StudentQuesAnsRepo;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import com.ogs.autograde.Repository.StudentRepo;
@@ -19,10 +16,8 @@ import com.ogs.autograde.models.FacultyQuesAns;
 import com.ogs.autograde.models.Image;
 import com.ogs.autograde.models.Student;
 import com.ogs.autograde.models.StudentQuesAns;
-import org.apache.tomcat.util.buf.Ascii;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class StudentAnsQuesServicesImp implements IStudentQuesAnsServices{

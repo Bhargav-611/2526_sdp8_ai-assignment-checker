@@ -1,19 +1,12 @@
 package com.ogs.autograde.controller;
 import com.ogs.autograde.DTO.CreateStudentQADto;
-import com.ogs.autograde.DTO.ImageModel;
-import com.ogs.autograde.DTO.QuestionsResponse;
-import com.ogs.autograde.models.Student;
-import com.ogs.autograde.models.StudentQuesAns;
 import com.ogs.autograde.services.IStudentQuesAnsServices;
 import com.ogs.autograde.services.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/questions")

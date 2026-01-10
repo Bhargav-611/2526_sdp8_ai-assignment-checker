@@ -1,14 +1,9 @@
 package com.ogs.autograde.services;
 
 import com.ogs.autograde.DTO.CreateStudentQADto;
-import com.ogs.autograde.DTO.QuestionsResponse;
-import com.ogs.autograde.models.StudentQuesAns;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.List;
 
 public interface IStudentQuesAnsServices {
 //    public StudentQuesAns findById(Long id);
