@@ -2,6 +2,7 @@ package com.ogs.autograde.controller;
 import ch.qos.logback.core.pattern.util.RegularEscapeUtil;
 import com.ogs.autograde.AiServices.OcrService;
 import com.ogs.autograde.payloads.AiResponse;
+import com.ogs.autograde.payloads.ApiResponse;
 import com.ogs.autograde.payloads.CreateStudentQADto;
 import com.ogs.autograde.payloads.OcrUrlResponse;
 import com.ogs.autograde.models.StudentQuesAns;
@@ -71,6 +72,19 @@ public class StudentQuesAnsController {
 //            return null;
 //        }
 //    }
+
+//    @PostMapping("/image")
+//    public ResponseEntity<?> removeImage(@ModelAttribute Long stu_ans_id)
+//    {
+//        StudentQuesAns studentQuesAns = studentQuesAnsServices.findById(stu_ans_id);
+//
+//        if(studentQuesAns == null)
+//        {
+//            return ResponseEntity.badRequest().body(ApiResponse.builder().success(false).message("Student Answer id not match").data("").build());
+//        }
+//
+//    }
+
 
     @GetMapping("/student/{id}")
     public ResponseEntity<?> getByStudentId(@PathVariable Long id)
