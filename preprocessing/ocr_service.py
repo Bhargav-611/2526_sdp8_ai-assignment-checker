@@ -1,4 +1,5 @@
-import torch
+import torch , requests
+from io import BytesIO
 from transformers import TrOCRProcessor, VisionEncoderDecoderModel
 from PIL import Image
 from utils import split_bw_image_into_valid_lines
@@ -52,12 +53,19 @@ def trocr_multiline(
     return " ".join(full_text)
 
 
-def image_to_text_extraction(image_path):
-    
-    image  = Image.open(image_path).convert("RGB")
+def image_to_text_extraction(image_url):
+    # 1. Download image from Cloudinary
+    response = requests.get(image_url, timeout=10)
+    response.raise_for_status()  # fail fast if URL is invalid
 
+    # 2. Convert bytes to PIL Image
+    image = Image.open(BytesIO(response.content)).convert("RGB")
+
+    # 3. Your existing preprocessing
     img = convert_image_to_black_and_white(image)
 
-    output_text = trocr_multiline(img , processor, model, device)
+    # 4. OCR
+    output_text = trocr_multiline(img, processor, model, device)
 
     return output_text
+
