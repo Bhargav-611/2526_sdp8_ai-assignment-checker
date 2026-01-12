@@ -1,13 +1,12 @@
-package com.ogs.autograde.services;
+package com.ogs.autograde.services.Implemantation;
 
-import com.ogs.autograde.DTO.ImageModel;
+import com.ogs.autograde.payloads.ImageModel;
 import com.ogs.autograde.Repository.ImageRepo;
 import com.ogs.autograde.models.Image;
+import com.ogs.autograde.services.CloudinaryService;
+import com.ogs.autograde.services.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
-import java.util.Map;
 
 @Service
 public class ImageServiceImpl implements ImageService {

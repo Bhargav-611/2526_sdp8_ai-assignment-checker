@@ -1,18 +1,20 @@
-package com.ogs.autograde.services;
+package com.ogs.autograde.services.Implemantation;
 
 
-import com.ogs.autograde.DTO.CreateFacultyQuesAnsDto;
+import com.ogs.autograde.payloads.CreateFacultyQuesAnsDto;
 import com.ogs.autograde.Repository.FacultyQuesAnsRepo;
 import com.ogs.autograde.Repository.FacultyRepo;
 import com.ogs.autograde.models.Faculty;
 import com.ogs.autograde.models.FacultyQuesAns;
+import com.ogs.autograde.services.FacultyQuesAnsServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
-public class FacultyQuesAnsServicesImp implements IFacultyQuesAnsServices{
+public class FacultyQuesAnsServicesImp implements FacultyQuesAnsServices {
 
     final private FacultyRepo facultyRepo;
     final private FacultyQuesAnsRepo facultyQuesAnsRepo;
@@ -34,6 +36,18 @@ public class FacultyQuesAnsServicesImp implements IFacultyQuesAnsServices{
         Faculty faculty = facultyOptional.get();
         faculty.addFacultyQuesAns(facultyQuesAns);
         facultyRepo.save(faculty);
+
         return facultyQuesAns;
+    }
+
+    @Override
+    public List<FacultyQuesAns> getAllFacultyQuesAns() {
+        return facultyQuesAnsRepo.findAll();
+    }
+
+    @Override
+    public FacultyQuesAns getById(Long id) {
+        Optional<FacultyQuesAns> facultyQuesAns = facultyQuesAnsRepo.findById(id);
+        return facultyQuesAns.orElse(null);
     }
 }

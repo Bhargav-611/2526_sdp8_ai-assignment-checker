@@ -11,8 +11,8 @@ class OCRPathRequest(BaseModel):
 
 @app.post("/ocr-path")
 def ocr_from_path(req: OCRPathRequest):
-    if not os.path.exists(req.image_path):
-        return {"error": "Image path not found"}
+    # if not os.path.exists(req.image_path):
+    #     return {"error": "Image path not found"}
 
     text = image_to_text_extraction(req.image_path)
 
@@ -53,8 +53,7 @@ class EvaluatePathRequest(BaseModel):
 
 @app.post("/evaluate-path")
 def evaluate_from_image_path(req: EvaluatePathRequest):
-    if not os.path.exists(req.image_path):
-        return {"error": "Image path not found"}
+
 
     # OCR
     student_answer = image_to_text_extraction(req.image_path)
@@ -66,6 +65,8 @@ def evaluate_from_image_path(req: EvaluatePathRequest):
         student_answer,
         req.max_marks
     )
+
+    print(student_answer, accuracy, marks, ai_response)
 
     return {
         "image_path": req.image_path,

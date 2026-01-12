@@ -1,4 +1,4 @@
-package com.ogs.autograde.DTO;
+package com.ogs.autograde.payloads;
 
 import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;

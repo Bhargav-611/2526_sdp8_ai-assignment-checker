@@ -1,17 +1,13 @@
-package com.ogs.autograde.services;
+package com.ogs.autograde.services.Implemantation;
 
 
 //import com.cloudinary.api.ApiResponse;
-import com.ogs.autograde.DTO.ApiResponse;
-import com.ogs.autograde.DTO.CreateStudentQADto;
-import com.ogs.autograde.DTO.ImageModel;
-import com.ogs.autograde.DTO.QuestionsResponse;
+import com.ogs.autograde.AiServices.OcrService;
+import com.ogs.autograde.payloads.*;
 import com.ogs.autograde.Repository.FacultyQuesAnsRepo;
 import com.ogs.autograde.Repository.StudentQuesAnsRepo;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import com.ogs.autograde.Repository.StudentRepo;
@@ -19,24 +15,26 @@ import com.ogs.autograde.models.FacultyQuesAns;
 import com.ogs.autograde.models.Image;
 import com.ogs.autograde.models.Student;
 import com.ogs.autograde.models.StudentQuesAns;
-import org.apache.tomcat.util.buf.Ascii;
+import com.ogs.autograde.services.StudentQuesAnsServices;
+import com.ogs.autograde.services.ImageService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
-public class StudentAnsQuesServicesImp implements IStudentQuesAnsServices{
+public class StudentAnsQuesServicesImp implements StudentQuesAnsServices {
 
     final private StudentQuesAnsRepo studentQuesAnsRepo;
     final private StudentRepo studentRepo;
     final private FacultyQuesAnsRepo facultyQuesAnsRepo;
     final private ImageService imageService;
+    final private OcrService ocrService;
 
-    public StudentAnsQuesServicesImp(StudentQuesAnsRepo studentQuesAnsRepo, StudentRepo studentRepo, FacultyQuesAnsRepo facultyQuesAnsRepo, ImageService imageService) {
+    public StudentAnsQuesServicesImp(StudentQuesAnsRepo studentQuesAnsRepo, StudentRepo studentRepo, FacultyQuesAnsRepo facultyQuesAnsRepo, ImageService imageService, OcrService ocrService) {
         this.studentQuesAnsRepo = studentQuesAnsRepo;
         this.studentRepo = studentRepo;
         this.facultyQuesAnsRepo = facultyQuesAnsRepo;
         this.imageService = imageService;
+        this.ocrService = ocrService;
     }
 
     public StudentQuesAns findById(Long id)
@@ -81,6 +79,17 @@ public class StudentAnsQuesServicesImp implements IStudentQuesAnsServices{
         facultyQuesAnsRepo.save(facultyQuesAns);
         return ResponseEntity.ok(ApiResponse.builder().success(true).message("Student Answer Upload Successfully").data(studentQuesAns).build());
 //        return ;
+    }
+
+    public StudentQuesAns AiEvolutionBy(Long id)
+    {
+        StudentQuesAns studentQuesAns = findById(id);
+        AiResponse response = ocrService.evolutionOfAi(studentQuesAns);
+        studentQuesAns.setEvolution(response.getEvaluation());
+        studentQuesAns.setAnswer_mark(response.getMarks());
+        studentQuesAns.setAnswer(response.getStudent_answer());
+        System.out.println(response.getAccuracy());
+        return  studentQuesAnsRepo.save(studentQuesAns);
     }
 
 //    public List<QuestionsResponse> getAllQuestions() {

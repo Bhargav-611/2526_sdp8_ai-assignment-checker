@@ -1,12 +1,13 @@
-package com.ogs.autograde.services;
+package com.ogs.autograde.services.Implemantation;
 
 import com.ogs.autograde.Repository.StudentRepo;
 import com.ogs.autograde.models.Student;
+import com.ogs.autograde.services.StudentServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class StudentServicesImp implements IStudentServices{
+public class StudentServicesImp implements StudentServices {
 
     final private StudentRepo studentRepo;
 

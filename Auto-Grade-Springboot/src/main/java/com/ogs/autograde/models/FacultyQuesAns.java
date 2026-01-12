@@ -1,5 +1,6 @@
 package com.ogs.autograde.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -26,6 +27,7 @@ public class FacultyQuesAns extends BaseModel{
     private Faculty faculty;
 
     @OneToMany(mappedBy = "facultyQuesAns",cascade = CascadeType.ALL,fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<StudentQuesAns> studentQuesAnsList;
 
     public void addStudentQuesAns(StudentQuesAns studentQuesAns)
