@@ -8,6 +8,7 @@ import com.ogs.autograde.Repository.FacultyQuesAnsRepo;
 import com.ogs.autograde.Repository.StudentQuesAnsRepo;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
 import com.ogs.autograde.Repository.StudentRepo;
@@ -91,6 +92,31 @@ public class StudentAnsQuesServicesImp implements StudentQuesAnsServices {
         System.out.println(response.getAccuracy());
         return  studentQuesAnsRepo.save(studentQuesAns);
     }
+
+    @Override
+    public ResponseEntity<?> getByStudentId(Long id) {
+        Optional<Student> studentOptional = studentRepo.findById(id);
+        if(studentOptional.isEmpty())
+        {
+            return ResponseEntity.ok().body(ApiResponse.builder().success(false).message("No Student Found").build());
+        }
+        Student student = studentOptional.get();
+        List<StudentQuesAns> studentQuesAns = student.getStudentQuesAnsList();
+        return ResponseEntity.ok().body(ApiResponse.builder().success(true).message("All answer fetch Successfully.").data(studentQuesAns).build());
+    }
+
+    @Override
+    public ResponseEntity<?> getByQuestionId(Long id) {
+        Optional<FacultyQuesAns> facultyQuesAnsOptional = facultyQuesAnsRepo.findById(id);
+        if(facultyQuesAnsOptional.isEmpty())
+        {
+            return ResponseEntity.ok().body(ApiResponse.builder().success(false).message("No Question is Found").build());
+        }
+        FacultyQuesAns facultyQuesAns = facultyQuesAnsOptional.get();
+        List<StudentQuesAns> studentQuesAnsList = facultyQuesAns.getStudentQuesAnsList();
+        return ResponseEntity.ok().body(ApiResponse.builder().success(true).message("All answer fetch Successfully.").data(studentQuesAnsList).build());
+    }
+
 
 //    public List<QuestionsResponse> getAllQuestions() {
 //        List<QuestionsResponse> questionsResponseList = new ArrayList<>();
