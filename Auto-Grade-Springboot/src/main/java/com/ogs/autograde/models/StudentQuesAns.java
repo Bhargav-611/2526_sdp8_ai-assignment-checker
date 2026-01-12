@@ -17,7 +17,8 @@ public class StudentQuesAns extends BaseModel{
 
     private String answer;
 
-    private int answer_mark;
+    private float answer_mark;
+    private float facultyMarks;
 
     private float accuracy_ocr;
 
