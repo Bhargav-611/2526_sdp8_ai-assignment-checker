@@ -16,6 +16,18 @@ public class Faculty extends BaseModel{
 
     private String name;
 
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    private String department;
+    private String designation; // Professor, Assistant Professor
+
+    private String qualification; // PhD, M.Tech
+    private int experienceYears;
+
+    @Column(length = 1000)
+    private String bio;
+
     @OneToMany(mappedBy = "faculty",cascade = CascadeType.ALL,fetch = FetchType.LAZY)
     @JsonIgnore
     private List<FacultyQuesAns> facultyQuesAnsList;
