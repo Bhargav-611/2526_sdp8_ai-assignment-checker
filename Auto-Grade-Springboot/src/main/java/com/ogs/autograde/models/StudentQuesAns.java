@@ -30,6 +30,8 @@ public class StudentQuesAns extends BaseModel{
     @JoinColumn(name = "image_id")
     private Image photo;
 
+    private String evolution;
+
     @ManyToOne
     @JoinColumn(name = "sqa_stu_id")
     @JsonIgnore

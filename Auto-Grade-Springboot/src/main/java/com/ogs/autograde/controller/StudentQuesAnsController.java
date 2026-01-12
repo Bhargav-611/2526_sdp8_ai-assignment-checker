@@ -1,9 +1,13 @@
 package com.ogs.autograde.controller;
 import com.ogs.autograde.AiServices.OcrService;
-import com.ogs.autograde.DTO.CreateStudentQADto;
-import com.ogs.autograde.DTO.OcrUrlResponse;
-import com.ogs.autograde.services.IStudentQuesAnsServices;
+import com.ogs.autograde.payloads.AiResponse;
+import com.ogs.autograde.payloads.CreateStudentQADto;
+import com.ogs.autograde.payloads.OcrUrlResponse;
+import com.ogs.autograde.models.StudentQuesAns;
+import com.ogs.autograde.services.StudentQuesAnsServices;
+import com.ogs.autograde.services.StudentServices;
 import com.ogs.autograde.services.ImageService;
+import com.ogs.autograde.services.Implemantation.StudentAnsQuesServicesImp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,14 +19,16 @@ import java.io.IOException;
 @CrossOrigin(origins = "http://localhost:5173")
 public class StudentQuesAnsController {
 
-    final private IStudentQuesAnsServices iStudentQuesAnsServices;
+    final private StudentQuesAnsServices studentQuesAnsServices;
     final private OcrService ocrService;
 
     @Autowired
     private ImageService imageService;
+    @Autowired
+    private StudentServices studentServices;
 
-    public StudentQuesAnsController(@Autowired IStudentQuesAnsServices iStudentQuesAnsServices, OcrService ocrService) {
-        this.iStudentQuesAnsServices = iStudentQuesAnsServices;
+    public StudentQuesAnsController(@Autowired StudentQuesAnsServices studentQuesAnsServices, OcrService ocrService) {
+        this.studentQuesAnsServices = studentQuesAnsServices;
         this.ocrService = ocrService;
     }
 
@@ -67,8 +73,7 @@ public class StudentQuesAnsController {
 
     @PostMapping()
     public ResponseEntity<?> createQuestion(@ModelAttribute CreateStudentQADto createStudentQADto) throws IOException {
-
-        return iStudentQuesAnsServices.createQuestion(createStudentQADto);
+        return studentQuesAnsServices.createQuestion(createStudentQADto);
     }
 
 
@@ -76,6 +81,12 @@ public class StudentQuesAnsController {
     public OcrUrlResponse getExtractText()
     {
         return ocrService.extractText("D:/Collage/Btech/sem6/AutoGrade/2526_sdp8_ai-assignment-checker/preprocessing/photos/ansh.jpeg");
+    }
+
+    @PostMapping("/ai/{id}")
+    public StudentQuesAns AiEvaluation(@PathVariable Long id)
+    {
+        return studentQuesAnsServices.AiEvolutionBy(id);
     }
 
 

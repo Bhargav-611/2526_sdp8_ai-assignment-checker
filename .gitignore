@@ -44,6 +44,7 @@ Untitled*.ipynb
 # Environment variables
 .env
 .env.local
+./preprocessing/.env
 
 # OS
 Thumbs.db

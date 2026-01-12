@@ -1,6 +1,7 @@
-package com.ogs.autograde.services;
+package com.ogs.autograde.services.Implemantation;
 
 import com.cloudinary.Cloudinary;
+import com.ogs.autograde.services.CloudinaryService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
