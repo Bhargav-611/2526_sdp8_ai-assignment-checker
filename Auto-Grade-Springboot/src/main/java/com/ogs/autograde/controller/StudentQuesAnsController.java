@@ -1,4 +1,5 @@
 package com.ogs.autograde.controller;
+import ch.qos.logback.core.pattern.util.RegularEscapeUtil;
 import com.ogs.autograde.AiServices.OcrService;
 import com.ogs.autograde.payloads.AiResponse;
 import com.ogs.autograde.payloads.CreateStudentQADto;
@@ -70,6 +71,18 @@ public class StudentQuesAnsController {
 //            return null;
 //        }
 //    }
+
+    @GetMapping("/student/{id}")
+    public ResponseEntity<?> getByStudentId(@PathVariable Long id)
+    {
+        return studentQuesAnsServices.getByStudentId(id);
+    }
+
+    @GetMapping("/question/{id}")
+    public ResponseEntity<?> getByQuestionId(@PathVariable Long id)
+    {
+        return studentQuesAnsServices.getByQuestionId(id);
+    }
 
     @PostMapping()
     public ResponseEntity<?> createQuestion(@ModelAttribute CreateStudentQADto createStudentQADto) throws IOException {

@@ -50,4 +50,11 @@ public class FacultyQuesAnsController {
         }
         return  ResponseEntity.ok().body(ApiResponse.builder().data(facultyQuesAns).success(true).message("fetch successfully.").build());
     }
+
+    @GetMapping("faculty/{id}")
+    public ResponseEntity<?> getByFacultyId(@PathVariable Long id)
+    {
+        return facultyQuesAnsServices.getByFacultyId(id);
+    }
+
 }

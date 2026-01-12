@@ -11,4 +11,6 @@ public interface StudentQuesAnsServices {
     public ResponseEntity<?> createQuestion(CreateStudentQADto createStudentQADto) throws IOException;
 //    public List<QuestionsResponse> getAllQuestions();
     public StudentQuesAns AiEvolutionBy(Long id);
+    ResponseEntity<?> getByStudentId(Long id);
+    ResponseEntity<?> getByQuestionId(Long id);
 }
