@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import TeacherSignup from "./pages/TeacherSignup";
 import TeacherDashboard from "./pages/TeacherDashboard";
+import StudentAnswerUpload from "./pages/StudentAnswerUpload";
 import "./index.css";
 
 function App() {
-  const [currentPage, setCurrentPage] = useState("signup"); // 'signup' or 'dashboard'
+  const [currentPage, setCurrentPage] = useState("signup"); // 'signup' | 'dashboard' | 'upload'
   const [teacherId, setTeacherId] = useState(null);
 
   // Check if teacher is already logged in (has teacherId in localStorage)
@@ -22,17 +23,24 @@ function App() {
     setCurrentPage("dashboard");
   };
 
-  // Handle navigation (if needed for future logout functionality)
-  const handleNavigation = (page) => {
-    setCurrentPage(page);
-  };
+  const goToDashboard = () => setCurrentPage("dashboard");
+  const goToUpload = () => setCurrentPage("upload");
 
   return (
     <div className="app">
-      {currentPage === "signup" ? (
+      {currentPage === "signup" && (
         <TeacherSignup onSignupSuccess={handleSignupSuccess} />
-      ) : (
-        <TeacherDashboard teacherId={teacherId} />
+      )}
+
+      {currentPage === "dashboard" && (
+        <TeacherDashboard teacherId={teacherId} onGoToUpload={goToUpload} />
+      )}
+
+      {currentPage === "upload" && (
+        <StudentAnswerUpload
+          teacherId={teacherId}
+          onBackToDashboard={goToDashboard}
+        />
       )}
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { API_ENDPOINTS } from "../config/api";
 
@@ -11,6 +11,31 @@ const TeacherSignup = ({ onSignupSuccess }) => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false);
+
+  // On mount, check if a teacher is already registered in this browser
+  useEffect(() => {
+    const existingId = localStorage.getItem("teacherId");
+    const existingName = localStorage.getItem("teacherName");
+
+    if (existingId) {
+      setAlreadyRegistered(true);
+      setFormData((prev) => ({
+        ...prev,
+        teacherId: existingId,
+        teacherName: existingName || prev.teacherName,
+      }));
+      setMessage({
+        type: "success",
+        text: "You are already registered. Redirecting to dashboard...",
+      });
+
+      // Automatically go to dashboard if callback is provided
+      if (onSignupSuccess) {
+        onSignupSuccess(existingId.toString());
+      }
+    }
+  }, [onSignupSuccess]);
 
   // Handle input changes
   const handleChange = (e) => {
@@ -47,6 +72,21 @@ const TeacherSignup = ({ onSignupSuccess }) => {
     e.preventDefault();
     setMessage({ type: "", text: "" });
 
+    // Prevent creating duplicate faculty if already registered in this browser
+    const existingId = localStorage.getItem("teacherId");
+    if (existingId) {
+      setAlreadyRegistered(true);
+      setMessage({
+        type: "success",
+        text: "You are already registered. Redirecting to dashboard...",
+      });
+
+      if (onSignupSuccess) {
+        onSignupSuccess(existingId.toString());
+      }
+      return;
+    }
+
     if (!validateForm()) {
       return;
     }
@@ -60,25 +100,24 @@ const TeacherSignup = ({ onSignupSuccess }) => {
         name: formData.teacherName.trim(),
       });
 
-      // Backend response format: { success: true/false, message: "...", data: { id, name, ... } }
-      if (response.data && response.data.success && response.data.data) {
-        const facultyId = response.data.data.id;
-        
+      // Backend returns ApiResponse with .data = Faculty (success flag may be missing/false)
+      if (response.data && response.data.data) {
+        const faculty = response.data.data;
+        const facultyId = faculty.id;
+
         // Store teacher ID and name in localStorage
         localStorage.setItem("teacherId", facultyId.toString());
-        localStorage.setItem("teacherName", response.data.data.name || formData.teacherName);
-        
+        localStorage.setItem("teacherName", faculty.name || formData.teacherName);
+
         setMessage({
           type: "success",
           text: "Registration successful! Redirecting to dashboard...",
         });
 
         // Redirect to dashboard after successful registration
-        setTimeout(() => {
-          if (onSignupSuccess) {
-            onSignupSuccess(facultyId.toString());
-          }
-        }, 1500);
+        if (onSignupSuccess) {
+          onSignupSuccess(facultyId.toString());
+        }
       } else {
         setMessage({
           type: "error",

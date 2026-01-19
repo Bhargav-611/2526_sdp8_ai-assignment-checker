@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { API_ENDPOINTS } from "../config/api";
 
-const TeacherDashboard = ({ teacherId: propTeacherId }) => {
+const TeacherDashboard = ({ teacherId: propTeacherId, onGoToUpload }) => {
   const [teacherId, setTeacherId] = useState("");
   const [formData, setFormData] = useState({
     question: "",
@@ -180,18 +180,18 @@ const TeacherDashboard = ({ teacherId: propTeacherId }) => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="modelAnswer">Model Answer *</label>
+            <label htmlFor="modelAnswer">Correct Answer *</label>
             <textarea
               id="modelAnswer"
               name="modelAnswer"
               value={formData.modelAnswer}
               onChange={handleChange}
-              placeholder="Enter the model answer here..."
+              placeholder="Enter the Currect answer here..."
               rows="5"
-              className={errors.modelAnswer ? "error" : ""}
+              className={errors.correctAnswer ? "error" : ""}
             />
-            {errors.modelAnswer && (
-              <span className="error-message">{errors.modelAnswer}</span>
+            {errors.correctAnswer && (
+              <span className="error-message">{errors.correctAnswer}</span>
             )}
           </div>
 
@@ -206,6 +206,16 @@ const TeacherDashboard = ({ teacherId: propTeacherId }) => {
           >
             {isSubmitting ? "Submitting..." : "Submit Question"}
           </button>
+
+        {onGoToUpload && (
+          <button
+            type="button"
+            className="secondary-btn"
+            onClick={onGoToUpload}
+          >
+            Go to Answer Upload
+          </button>
+        )}
         </form>
       </div>
     </div>

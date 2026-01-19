@@ -11,6 +11,11 @@ export const API_ENDPOINTS = {
   FACULTY_QUESTION_CREATE: `${API_BASE_URL}/facultyquesans`,
   FACULTY_QUESTION_GET_ALL: `${API_BASE_URL}/facultyquesans/all`,
   FACULTY_QUESTION_GET_BY_ID: (id) => `${API_BASE_URL}/facultyquesans/id/${id}`,
+
+  // Student & answer upload endpoints
+  STUDENT_CREATE: `${API_BASE_URL}/student`, // POST ?name=
+  STUDENT_ANSWER_UPLOAD: `${API_BASE_URL}/questions`, // POST multipart/form-data
+  STUDENT_ANSWER_EVALUATE: (id) => `${API_BASE_URL}/questions/ai/${id}`,
 };
 
 export default API_BASE_URL;
