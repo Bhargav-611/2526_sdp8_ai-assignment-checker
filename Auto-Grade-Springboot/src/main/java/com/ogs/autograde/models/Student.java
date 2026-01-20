@@ -16,6 +16,18 @@ public class Student extends BaseModel{
 
     private String name;
 
+    @Column(nullable = false, unique = true)
+    private String rollNumber;
+
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    private String department;
+    private String semester;
+    private String section;
+
+    private String admissionYear;
+
     @OneToMany(mappedBy = "student",cascade = CascadeType.ALL,fetch = FetchType.LAZY)
     private List<StudentQuesAns> studentQuesAnsList;
 

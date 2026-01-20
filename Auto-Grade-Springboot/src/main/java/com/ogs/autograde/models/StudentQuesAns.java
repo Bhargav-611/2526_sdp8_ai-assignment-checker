@@ -15,9 +15,11 @@ import lombok.*;
 @Entity
 public class StudentQuesAns extends BaseModel{
 
+    @Column(length = 5000)
     private String answer;
 
-    private int answer_mark;
+    private float answer_mark;
+    private float facultyMarks;
 
     private float accuracy_ocr;
 
@@ -30,6 +32,7 @@ public class StudentQuesAns extends BaseModel{
     @JoinColumn(name = "image_id")
     private Image photo;
 
+    @Column(length = 1000)
     private String evolution;
 
     @ManyToOne

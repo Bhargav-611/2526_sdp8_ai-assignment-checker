@@ -14,6 +14,7 @@ import java.util.List;
 @Entity
 public class FacultyQuesAns extends BaseModel{
 
+    @Column(length = 5000)
     private String answer;
 
     @Column(nullable = false)
