@@ -5,4 +5,5 @@ import com.ogs.autograde.models.Image;
 
 public interface ImageService {
     public Image uploadImage(ImageModel imageModel);
+    public boolean deleteImage(Long imageId);
 }

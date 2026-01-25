@@ -9,10 +9,11 @@ import com.ogs.autograde.services.FacultyQuesAnsServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/facultyquesans")
+@RequestMapping("/api/facultyquesans")
 public class FacultyQuesAnsController {
     final private FacultyQuesAnsServices facultyQuesAnsServices;
 
@@ -21,6 +22,7 @@ public class FacultyQuesAnsController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('TEACHER')")
     ResponseEntity<?> createFacultyQuesAns(@RequestBody CreateFacultyQuesAnsDto createFacultyQuesAnsDto)
     {
         FacultyQuesAns facultyQuesAns = facultyQuesAnsServices.createFacultyQuesAns(createFacultyQuesAnsDto);
@@ -35,12 +37,14 @@ public class FacultyQuesAnsController {
     }
 
     @GetMapping("/all")
+    @PreAuthorize("hasRole('TEACHER')")
     ResponseEntity<?> getAllFacultyQuesAns()
     {
         return ResponseEntity.ok().body(ApiResponse.builder().data(facultyQuesAnsServices.getAllFacultyQuesAns()).success(true).message("All Faculty Question Answer fetch Successfully").build());
     }
 
     @GetMapping("/id/{id}")
+    @PreAuthorize("hasRole('TEACHER')")
     public  ResponseEntity<?> getById(@PathVariable Long id)
     {
         FacultyQuesAns facultyQuesAns = facultyQuesAnsServices.getById(id);
@@ -52,6 +56,7 @@ public class FacultyQuesAnsController {
     }
 
     @GetMapping("faculty/{id}")
+    @PreAuthorize("hasRole('TEACHER')")
     public ResponseEntity<?> getByFacultyId(@PathVariable Long id)
     {
         return facultyQuesAnsServices.getByFacultyId(id);

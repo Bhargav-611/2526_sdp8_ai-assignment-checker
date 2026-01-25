@@ -16,4 +16,7 @@ public class Image extends BaseModel{
     @Column(name = "url_image")
     private String url;
 
+    @Column(nullable = true)
+    private String publicId;
+
 }

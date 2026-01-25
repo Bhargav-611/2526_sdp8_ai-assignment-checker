@@ -8,6 +8,8 @@ import com.ogs.autograde.services.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
+
 @Service
 public class ImageServiceImpl implements ImageService {
 
@@ -19,27 +21,37 @@ public class ImageServiceImpl implements ImageService {
 
     @Override
     public Image uploadImage(ImageModel imageModel) {
-        try {
-            if (imageModel.getName().isEmpty()) {
-                return null;
-//                return ResponseEntity.badRequest().build();
-            }
-            if (imageModel.getFile().isEmpty()) {
-                return null;
-//                return ResponseEntity.badRequest().build();
-            }
-            Image image = new Image();
-            image.setName(imageModel.getName());
-            image.setUrl(cloudinaryService.uploadFile(imageModel.getFile(), "folder_1"));
-            if(image.getUrl() == null) {
-                return null;
-//                return ResponseEntity.badRequest().build();
-            }
-            imageRepository.save(image);
-            return image;
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (imageModel.getName().isEmpty() || imageModel.getFile().isEmpty()) {
             return null;
         }
+        Map<String, String> uploadResult = cloudinaryService.uploadFile(imageModel.getFile(), "folder_1");
+
+        if (uploadResult == null) {
+            return null;
+        }
+
+        Image image = new Image();
+        image.setName(imageModel.getName());
+        image.setUrl(uploadResult.get("url"));
+        image.setPublicId(uploadResult.get("publicId"));
+
+        return imageRepository.save(image);
     }
+    @Override
+    public boolean deleteImage(Long imageId) {
+
+        Image image = imageRepository.findById(imageId)
+                .orElseThrow(() -> new RuntimeException("Image not found"));
+
+        boolean deletedFromCloudinary =
+                cloudinaryService.deleteFile(image.getPublicId());
+
+        if (deletedFromCloudinary) {
+            imageRepository.delete(image);
+            return true;
+        }
+
+        return false;
+    }
+
 }

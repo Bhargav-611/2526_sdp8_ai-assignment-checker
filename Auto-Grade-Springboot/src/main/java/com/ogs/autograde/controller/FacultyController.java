@@ -7,10 +7,11 @@ import com.ogs.autograde.payloads.CreateFacultyDto;
 import com.ogs.autograde.services.FacultyServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/faculty")
+@RequestMapping("/api/faculty")
 public class FacultyController {
 
     final private FacultyServices facultyServices;
@@ -21,6 +22,7 @@ public class FacultyController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('TEACHER')")
     public ResponseEntity<?> createFaculty(@RequestBody CreateFacultyDto createFacultyDto)
     {
         Faculty faculty = facultyServices.createFaculty(createFacultyDto);
@@ -32,6 +34,7 @@ public class FacultyController {
     }
 
     @GetMapping("/all")
+    @PreAuthorize("hasRole('TEACHER')")
     public  ResponseEntity<?> getAllFaculty()
     {
         return ResponseEntity.ok().body(ApiResponse.builder().data(facultyServices.findAllFaculty()).success(true).message("All Faculty fetch Successfully").build());
@@ -39,10 +42,10 @@ public class FacultyController {
 
 
     @GetMapping("/id/{id}")
+    @PreAuthorize("hasRole('TEACHER')")
     public  ResponseEntity<?> getById(@PathVariable Long id)
     {
         Faculty faculty = facultyServices.findByid(id);
-//        System.out.println(faculty.getName());
         if(faculty == null)
         {
             return ResponseEntity.ok().body(ApiResponse.builder().success(false).message("Not find faculty with is id.").build());

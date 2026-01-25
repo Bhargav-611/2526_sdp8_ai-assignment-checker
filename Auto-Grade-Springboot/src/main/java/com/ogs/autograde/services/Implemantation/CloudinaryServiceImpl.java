@@ -17,17 +17,36 @@ public class CloudinaryServiceImpl implements CloudinaryService {
     private Cloudinary cloudinary;
 
     @Override
-    public String uploadFile(MultipartFile file, String folderName) {
-        try{
+    public Map<String, String> uploadFile(MultipartFile file, String folderName) {
+        try {
             HashMap<Object, Object> options = new HashMap<>();
             options.put("folder", folderName);
-            Map uploadedFile = cloudinary.uploader().upload(file.getBytes(), options);
-            String publicId = (String) uploadedFile.get("public_id");
-            return cloudinary.url().secure(true).generate(publicId);
 
-        }catch (IOException e){
+            Map uploadResult =
+                    cloudinary.uploader().upload(file.getBytes(), options);
+
+            String publicId = (String) uploadResult.get("public_id");
+            String url = cloudinary.url().secure(true).generate(publicId);
+
+            Map<String, String> result = new HashMap<>();
+            result.put("publicId", publicId);
+            result.put("url", url);
+
+            return result;
+
+        } catch (IOException e) {
             e.printStackTrace();
             return null;
+        }
+    }
+
+    public boolean deleteFile(String publicId) {
+        try {
+            Map result = cloudinary.uploader().destroy(publicId, Map.of());
+            return "ok".equals(result.get("result"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
     }
 }
