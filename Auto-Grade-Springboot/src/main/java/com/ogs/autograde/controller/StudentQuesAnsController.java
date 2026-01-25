@@ -12,12 +12,13 @@ import com.ogs.autograde.services.ImageService;
 import com.ogs.autograde.services.Implemantation.StudentAnsQuesServicesImp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 
 @RestController
-@RequestMapping("/questions")
+@RequestMapping("/api/questions")
 @CrossOrigin(origins = "http://localhost:5173")
 public class StudentQuesAnsController {
 
@@ -87,30 +88,35 @@ public class StudentQuesAnsController {
 
 
     @GetMapping("/student/{id}")
+    @PreAuthorize("hasAnyRole('STUDENT', 'TEACHER')")
     public ResponseEntity<?> getByStudentId(@PathVariable Long id)
     {
         return studentQuesAnsServices.getByStudentId(id);
     }
 
     @GetMapping("/question/{id}")
+    @PreAuthorize("hasAnyRole('STUDENT', 'TEACHER')")
     public ResponseEntity<?> getByQuestionId(@PathVariable Long id)
     {
         return studentQuesAnsServices.getByQuestionId(id);
     }
 
     @PostMapping()
+    @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<?> createQuestion(@ModelAttribute CreateStudentQADto createStudentQADto) throws IOException {
         return studentQuesAnsServices.createQuestion(createStudentQADto);
     }
 
 
     @PostMapping("/extract")
+    @PreAuthorize("hasAnyRole('STUDENT', 'TEACHER')")
     public OcrUrlResponse getExtractText()
     {
         return ocrService.extractText("D:/Collage/Btech/sem6/AutoGrade/2526_sdp8_ai-assignment-checker/preprocessing/photos/ansh.jpeg");
     }
 
     @PostMapping("/ai/{id}")
+    @PreAuthorize("hasAnyRole('STUDENT', 'TEACHER')")
     public StudentQuesAns AiEvaluation(@PathVariable Long id)
     {
         return studentQuesAnsServices.AiEvolutionBy(id);

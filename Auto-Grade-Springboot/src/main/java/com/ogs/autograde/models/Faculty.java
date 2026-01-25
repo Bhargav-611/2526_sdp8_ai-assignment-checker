@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Builder
@@ -19,6 +20,11 @@ public class Faculty extends BaseModel{
     @Column(nullable = false, unique = true)
     private String email;
 
+    private String password;
+
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
     private String department;
     private String designation; // Professor, Assistant Professor
 
@@ -30,7 +36,8 @@ public class Faculty extends BaseModel{
 
     @OneToMany(mappedBy = "faculty",cascade = CascadeType.ALL,fetch = FetchType.LAZY)
     @JsonIgnore
-    private List<FacultyQuesAns> facultyQuesAnsList;
+    @Builder.Default
+    private List<FacultyQuesAns> facultyQuesAnsList = new ArrayList<>();
 
     public void addFacultyQuesAns(FacultyQuesAns facultyQuesAns)
     {

@@ -7,10 +7,11 @@ import com.ogs.autograde.services.StudentServices;
 import org.apache.hc.core5.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/student")
+@RequestMapping("/api/student")
 public class StudentController {
     final private StudentServices studentServices;
 
@@ -20,6 +21,7 @@ public class StudentController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<?> createStudent(@RequestParam("name") String name)
     {
         Student student = studentServices.createStudent(name);
