@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Optional;
 
 import com.ogs.autograde.Repository.StudentRepo;
+import com.ogs.autograde.Repository.FacultyRepo;
+import com.ogs.autograde.models.Faculty;
 import com.ogs.autograde.models.FacultyQuesAns;
 import com.ogs.autograde.models.Image;
 import com.ogs.autograde.models.Student;
@@ -27,13 +29,15 @@ public class StudentAnsQuesServicesImp implements StudentQuesAnsServices {
     final private StudentQuesAnsRepo studentQuesAnsRepo;
     final private StudentRepo studentRepo;
     final private FacultyQuesAnsRepo facultyQuesAnsRepo;
+    final private FacultyRepo facultyRepo;
     final private ImageService imageService;
     final private OcrService ocrService;
 
-    public StudentAnsQuesServicesImp(StudentQuesAnsRepo studentQuesAnsRepo, StudentRepo studentRepo, FacultyQuesAnsRepo facultyQuesAnsRepo, ImageService imageService, OcrService ocrService) {
+    public StudentAnsQuesServicesImp(StudentQuesAnsRepo studentQuesAnsRepo, StudentRepo studentRepo, FacultyQuesAnsRepo facultyQuesAnsRepo, FacultyRepo facultyRepo, ImageService imageService, OcrService ocrService) {
         this.studentQuesAnsRepo = studentQuesAnsRepo;
         this.studentRepo = studentRepo;
         this.facultyQuesAnsRepo = facultyQuesAnsRepo;
+        this.facultyRepo = facultyRepo;
         this.imageService = imageService;
         this.ocrService = ocrService;
     }
@@ -115,6 +119,65 @@ public class StudentAnsQuesServicesImp implements StudentQuesAnsServices {
         FacultyQuesAns facultyQuesAns = facultyQuesAnsOptional.get();
         List<StudentQuesAns> studentQuesAnsList = facultyQuesAns.getStudentQuesAnsList();
         return ResponseEntity.ok().body(ApiResponse.builder().success(true).message("All answer fetch Successfully.").data(studentQuesAnsList).build());
+    }
+
+    @Override
+    public ResponseEntity<?> updateMarks(Long id, UpdateMarksDto updateMarksDto) {
+        Optional<StudentQuesAns> studentQuesAnsOptional = studentQuesAnsRepo.findById(id);
+        if(studentQuesAnsOptional.isEmpty())
+        {
+            return ResponseEntity.ok().body(ApiResponse.builder().success(false).message("Student Answer not found").build());
+        }
+        StudentQuesAns studentQuesAns = studentQuesAnsOptional.get();
+        
+        // Update marks and feedback
+        if(updateMarksDto.getAnswer_mark() != null) {
+            studentQuesAns.setAnswer_mark(updateMarksDto.getAnswer_mark());
+        }
+        if(updateMarksDto.getEvolution() != null && !updateMarksDto.getEvolution().isEmpty()) {
+            studentQuesAns.setEvolution(updateMarksDto.getEvolution());
+        }
+        
+        StudentQuesAns updatedAnswer = studentQuesAnsRepo.save(studentQuesAns);
+        return ResponseEntity.ok().body(ApiResponse.builder()
+                .success(true)
+                .message("Marks updated successfully")
+                .data(updatedAnswer)
+                .build());
+    }
+
+    @Override
+    public ResponseEntity<?> getAllSubmissions() {
+        List<StudentQuesAns> allSubmissions = studentQuesAnsRepo.findAll();
+        return ResponseEntity.ok().body(ApiResponse.builder()
+                .success(true)
+                .message("All submissions fetched successfully")
+                .data(allSubmissions)
+                .build());
+    }
+
+    @Override
+    public ResponseEntity<?> getSubmissionsByFacultyId(Long facultyId) {
+        Optional<Faculty> facultyOptional = facultyRepo.findById(facultyId);
+        if(facultyOptional.isEmpty())
+        {
+            return ResponseEntity.ok().body(ApiResponse.builder().success(false).message("Faculty not found").build());
+        }
+        
+        Faculty faculty = facultyOptional.get();
+        List<FacultyQuesAns> facultyQuestions = faculty.getFacultyQuesAnsList();
+        
+        // Collect all submissions for this faculty's questions
+        List<StudentQuesAns> allSubmissions = new java.util.ArrayList<>();
+        for(FacultyQuesAns question : facultyQuestions) {
+            allSubmissions.addAll(question.getStudentQuesAnsList());
+        }
+        
+        return ResponseEntity.ok().body(ApiResponse.builder()
+                .success(true)
+                .message("Submissions fetched successfully")
+                .data(allSubmissions)
+                .build());
     }
 
 

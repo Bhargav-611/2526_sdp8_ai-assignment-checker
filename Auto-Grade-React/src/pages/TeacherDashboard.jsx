@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { API_ENDPOINTS } from "../config/api";
+import { useAuth } from "../context/AuthContext";
 
-const TeacherDashboard = ({ teacherId: propTeacherId, onGoToUpload }) => {
-  const [teacherId, setTeacherId] = useState("");
+const TeacherDashboard = ({ onNavigate }) => {
+  const { user, logout } = useAuth();
   const [formData, setFormData] = useState({
     question: "",
     marks: "",
@@ -12,22 +13,40 @@ const TeacherDashboard = ({ teacherId: propTeacherId, onGoToUpload }) => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [questions, setQuestions] = useState([]);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [activeTab, setActiveTab] = useState("add"); // 'add' or 'view'
 
-  // Get teacher ID from localStorage or props
+  // Load questions for this faculty
   useEffect(() => {
-    const storedTeacherId = localStorage.getItem("teacherId");
-    if (propTeacherId) {
-      setTeacherId(propTeacherId);
-    } else if (storedTeacherId) {
-      setTeacherId(storedTeacherId);
-    } else {
-      // If no teacher ID found, show error message
+    if (activeTab === "view" && user?.id) {
+      loadQuestions();
+    }
+  }, [activeTab, user?.id]);
+
+  const loadQuestions = async () => {
+    setLoadingQuestions(true);
+    try {
+      const res = await axios.get(
+        API_ENDPOINTS.FACULTY_QUESTION_GET_BY_FACULTY_ID(user.id)
+      );
+      
+      if (res.data?.success && res.data?.data) {
+        setQuestions(res.data.data);
+      } else if (res.data?.data) {
+        // Handle if backend returns data directly
+        setQuestions(Array.isArray(res.data.data) ? res.data.data : []);
+      }
+    } catch (err) {
+      console.error("Failed to load questions:", err);
       setMessage({
         type: "error",
-        text: "Teacher ID not found. Please register first.",
+        text: err.response?.data?.message || "Could not load questions.",
       });
+    } finally {
+      setLoadingQuestions(false);
     }
-  }, [propTeacherId]);
+  };
 
   // Handle input changes
   const handleChange = (e) => {
@@ -80,10 +99,10 @@ const TeacherDashboard = ({ teacherId: propTeacherId, onGoToUpload }) => {
       return;
     }
 
-    if (!teacherId) {
+    if (!user?.id) {
       setMessage({
         type: "error",
-        text: "Teacher ID is missing. Please register first.",
+        text: "User ID is missing. Please login again.",
       });
       return;
     }
@@ -94,7 +113,7 @@ const TeacherDashboard = ({ teacherId: propTeacherId, onGoToUpload }) => {
       // Backend API endpoint: POST /facultyquesans
       // Request body format: { faculty_id: Long, question: String, answer: String, max_mark: int }
       const payload = {
-        faculty_id: parseInt(teacherId, 10), // Convert to number (Long)
+        faculty_id: user.id,
         question: formData.question.trim(),
         answer: formData.modelAnswer.trim(), // Backend expects "answer" field
         max_mark: parseInt(formData.marks, 10), // Backend expects "max_mark" field
@@ -118,6 +137,11 @@ const TeacherDashboard = ({ teacherId: propTeacherId, onGoToUpload }) => {
           marks: "",
           modelAnswer: "",
         });
+
+        // Reload questions if on view tab
+        if (activeTab === "view") {
+          loadQuestions();
+        }
       }
     } catch (error) {
       console.error("Error adding question:", error);
@@ -133,91 +157,166 @@ const TeacherDashboard = ({ teacherId: propTeacherId, onGoToUpload }) => {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    onNavigate('login');
+  };
+
+
   return (
     <div className="dashboard">
-      <div className="question-card">
-        {/* Display Teacher ID on top-right */}
-        {teacherId && (
-          <div className="question-id">Teacher ID: {teacherId}</div>
-        )}
-
-        <h2>Question Setup</h2>
-        <p className="subtitle">Add questions for evaluation</p>
-
-        <form onSubmit={handleSubmit} className="question-form">
-          <div className="form-group">
-            <label htmlFor="question">Question *</label>
-            <textarea
-              id="question"
-              name="question"
-              value={formData.question}
-              onChange={handleChange}
-              placeholder="Enter the question here..."
-              rows="4"
-              className={errors.question ? "error" : ""}
-            />
-            {errors.question && (
-              <span className="error-message">{errors.question}</span>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="marks">Marks *</label>
-            <input
-              type="number"
-              id="marks"
-              name="marks"
-              value={formData.marks}
-              onChange={handleChange}
-              placeholder="Enter marks"
-              min="1"
-              step="1"
-              className={errors.marks ? "error" : ""}
-            />
-            {errors.marks && (
-              <span className="error-message">{errors.marks}</span>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="modelAnswer">Correct Answer *</label>
-            <textarea
-              id="modelAnswer"
-              name="modelAnswer"
-              value={formData.modelAnswer}
-              onChange={handleChange}
-              placeholder="Enter the Currect answer here..."
-              rows="5"
-              className={errors.correctAnswer ? "error" : ""}
-            />
-            {errors.correctAnswer && (
-              <span className="error-message">{errors.correctAnswer}</span>
-            )}
-          </div>
-
-          {message.text && (
-            <div className={`message ${message.type}`}>{message.text}</div>
-          )}
-
+      <div className="dashboard-header">
+        <div className="user-info">
+          <h1>Teacher Dashboard</h1>
+          <p>Welcome, {user?.name}</p>
+        </div>
+        <div className="header-actions">
           <button
-            type="submit"
-            className="submit-btn"
-            disabled={isSubmitting}
+            className="btn-primary"
+            onClick={() => onNavigate('answer-upload')}
           >
-            {isSubmitting ? "Submitting..." : "Submit Question"}
+            Upload & Evaluate Answer
           </button>
-
-        {onGoToUpload && (
           <button
-            type="button"
-            className="secondary-btn"
-            onClick={onGoToUpload}
+            className="btn-primary"
+            onClick={() => onNavigate('teacher-submissions')}
           >
-            Go to Answer Upload
+            View Submissions
           </button>
-        )}
-        </form>
+          <button className="btn-logout" onClick={handleLogout}>
+            Logout
+          </button>
+        </div>
       </div>
+
+      <div className="tabs">
+        <button
+          className={`tab ${activeTab === "add" ? "active" : ""}`}
+          onClick={() => setActiveTab("add")}
+        >
+          Add Question
+        </button>
+        <button
+          className={`tab ${activeTab === "view" ? "active" : ""}`}
+          onClick={() => setActiveTab("view")}
+        >
+          View Questions
+        </button>
+      </div>
+
+      {activeTab === "add" && (
+        <div className="question-card">
+          <h2>Add New Question</h2>
+          <p className="subtitle">Create questions for evaluation</p>
+
+          <form onSubmit={handleSubmit} className="question-form">
+            <div className="form-group">
+              <label htmlFor="question">Question *</label>
+              <textarea
+                id="question"
+                name="question"
+                value={formData.question}
+                onChange={handleChange}
+                placeholder="Enter the question here..."
+                rows="4"
+                className={errors.question ? "error" : ""}
+              />
+              {errors.question && (
+                <span className="error-message">{errors.question}</span>
+              )}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="marks">Marks *</label>
+              <input
+                type="number"
+                id="marks"
+                name="marks"
+                value={formData.marks}
+                onChange={handleChange}
+                placeholder="Enter marks"
+                min="1"
+                step="1"
+                className={errors.marks ? "error" : ""}
+              />
+              {errors.marks && (
+                <span className="error-message">{errors.marks}</span>
+              )}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="modelAnswer">Model Answer *</label>
+              <textarea
+                id="modelAnswer"
+                name="modelAnswer"
+                value={formData.modelAnswer}
+                onChange={handleChange}
+                placeholder="Enter the correct answer here..."
+                rows="5"
+                className={errors.modelAnswer ? "error" : ""}
+              />
+              {errors.modelAnswer && (
+                <span className="error-message">{errors.modelAnswer}</span>
+              )}
+            </div>
+
+            {message.text && (
+              <div className={`message ${message.type}`}>{message.text}</div>
+            )}
+
+            <button
+              type="submit"
+              className="submit-btn"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Submitting..." : "Submit Question"}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {activeTab === "view" && (
+        <div className="questions-list">
+          <h2>Your Questions</h2>
+          {loadingQuestions ? (
+            <div className="loading">Loading questions...</div>
+          ) : questions.length === 0 ? (
+            <div className="empty-state">
+              <p>No questions added yet. Start by adding your first question!</p>
+              <button className="btn-primary" onClick={() => setActiveTab("add")}>
+                Add Question
+              </button>
+            </div>
+          ) : (
+            <div className="questions-grid">
+              {questions.map((q, index) => (
+                <div key={q.id} className="question-item">
+                  <div className="question-header">
+                    <span className="question-number">Q{index + 1}</span>
+                    <span className="question-marks">{q.max_mark} marks</span>
+                  </div>
+                  <div className="question-content">
+                    <h3>Question:</h3>
+                    <p>{q.question}</p>
+                  </div>
+                  <div className="answer-content">
+                    <h3>Model Answer:</h3>
+                    <p>{q.answer}</p>
+                  </div>
+                  <div className="question-actions">
+                    <button
+                      className="btn-small"
+                      onClick={() => onNavigate('student-upload', { questionId: q.id })}
+                    >
+                      View Submissions
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

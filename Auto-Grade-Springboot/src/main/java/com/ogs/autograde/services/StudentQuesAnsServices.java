@@ -2,6 +2,7 @@ package com.ogs.autograde.services;
 
 import com.ogs.autograde.models.StudentQuesAns;
 import com.ogs.autograde.payloads.CreateStudentQADto;
+import com.ogs.autograde.payloads.UpdateMarksDto;
 import org.springframework.http.ResponseEntity;
 
 import java.io.IOException;
@@ -13,4 +14,7 @@ public interface StudentQuesAnsServices {
     public StudentQuesAns AiEvolutionBy(Long id);
     ResponseEntity<?> getByStudentId(Long id);
     ResponseEntity<?> getByQuestionId(Long id);
+    ResponseEntity<?> updateMarks(Long id, UpdateMarksDto updateMarksDto);
+    ResponseEntity<?> getAllSubmissions();
+    ResponseEntity<?> getSubmissionsByFacultyId(Long facultyId);
 }

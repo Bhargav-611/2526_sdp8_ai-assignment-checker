@@ -5,6 +5,7 @@ import com.ogs.autograde.payloads.AiResponse;
 import com.ogs.autograde.payloads.ApiResponse;
 import com.ogs.autograde.payloads.CreateStudentQADto;
 import com.ogs.autograde.payloads.OcrUrlResponse;
+import com.ogs.autograde.payloads.UpdateMarksDto;
 import com.ogs.autograde.models.StudentQuesAns;
 import com.ogs.autograde.services.StudentQuesAnsServices;
 import com.ogs.autograde.services.StudentServices;
@@ -19,7 +20,7 @@ import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/questions")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174"})
 public class StudentQuesAnsController {
 
     final private StudentQuesAnsServices studentQuesAnsServices;
@@ -88,38 +89,53 @@ public class StudentQuesAnsController {
 
 
     @GetMapping("/student/{id}")
-    @PreAuthorize("hasAnyRole('STUDENT', 'TEACHER')")
     public ResponseEntity<?> getByStudentId(@PathVariable Long id)
     {
         return studentQuesAnsServices.getByStudentId(id);
     }
 
     @GetMapping("/question/{id}")
-    @PreAuthorize("hasAnyRole('STUDENT', 'TEACHER')")
     public ResponseEntity<?> getByQuestionId(@PathVariable Long id)
     {
         return studentQuesAnsServices.getByQuestionId(id);
     }
 
     @PostMapping()
-    @PreAuthorize("hasRole('STUDENT')")
+    @PreAuthorize("hasRole('TEACHER')")
     public ResponseEntity<?> createQuestion(@ModelAttribute CreateStudentQADto createStudentQADto) throws IOException {
         return studentQuesAnsServices.createQuestion(createStudentQADto);
     }
 
 
     @PostMapping("/extract")
-    @PreAuthorize("hasAnyRole('STUDENT', 'TEACHER')")
     public OcrUrlResponse getExtractText()
     {
         return ocrService.extractText("D:/Collage/Btech/sem6/AutoGrade/2526_sdp8_ai-assignment-checker/preprocessing/photos/ansh.jpeg");
     }
 
     @PostMapping("/ai/{id}")
-    @PreAuthorize("hasAnyRole('STUDENT', 'TEACHER')")
     public StudentQuesAns AiEvaluation(@PathVariable Long id)
     {
         return studentQuesAnsServices.AiEvolutionBy(id);
+    }
+
+    @PutMapping("/update-marks/{id}")
+    @PreAuthorize("hasRole('TEACHER')")
+    public ResponseEntity<?> updateMarks(@PathVariable Long id, @RequestBody UpdateMarksDto updateMarksDto)
+    {
+        return studentQuesAnsServices.updateMarks(id, updateMarksDto);
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllSubmissions()
+    {
+        return studentQuesAnsServices.getAllSubmissions();
+    }
+
+    @GetMapping("/faculty/{facultyId}/submissions")
+    public ResponseEntity<?> getSubmissionsByFacultyId(@PathVariable Long facultyId)
+    {
+        return studentQuesAnsServices.getSubmissionsByFacultyId(facultyId);
     }
 
 
