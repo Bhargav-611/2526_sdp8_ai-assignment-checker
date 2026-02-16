@@ -5,6 +5,7 @@ import com.ogs.autograde.models.Student;
 import com.ogs.autograde.services.StudentServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import java.util.List;
 
 @Service
 public class StudentServicesImp implements StudentServices {
@@ -20,5 +21,10 @@ public class StudentServicesImp implements StudentServices {
         System.out.println(name);
         Student student = Student.builder().name(name).build();
         return studentRepo.save(student);
+    }
+
+    @Override
+    public List<Student> getAllStudents() {
+        return studentRepo.findAll();
     }
 }

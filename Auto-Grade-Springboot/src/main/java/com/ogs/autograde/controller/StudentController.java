@@ -35,6 +35,15 @@ public class StudentController {
         }
     }
 
-
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('TEACHER')")
+    public ResponseEntity<?> getAllStudents()
+    {
+        return ResponseEntity.ok().body(ApiResponse.builder()
+                .success(true)
+                .message("All students retrieved successfully")
+                .data(studentServices.getAllStudents())
+                .build());
+    }
 
 }

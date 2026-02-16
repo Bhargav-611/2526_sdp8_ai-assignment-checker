@@ -61,6 +61,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/api/facultyquesans/**").permitAll() // Allow students to view questions
+                        .requestMatchers("/api/questions/**").permitAll() // Allow answer uploads and evaluations
+                        .requestMatchers("/api/student/all").hasRole("TEACHER") // Teachers can view all students
                         .requestMatchers("/api/faculty/**").hasRole("TEACHER")
                         .requestMatchers("/api/student/**").hasRole("STUDENT")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")

@@ -37,14 +37,12 @@ public class FacultyQuesAnsController {
     }
 
     @GetMapping("/all")
-    @PreAuthorize("hasRole('TEACHER')")
     ResponseEntity<?> getAllFacultyQuesAns()
     {
         return ResponseEntity.ok().body(ApiResponse.builder().data(facultyQuesAnsServices.getAllFacultyQuesAns()).success(true).message("All Faculty Question Answer fetch Successfully").build());
     }
 
     @GetMapping("/id/{id}")
-    @PreAuthorize("hasRole('TEACHER')")
     public  ResponseEntity<?> getById(@PathVariable Long id)
     {
         FacultyQuesAns facultyQuesAns = facultyQuesAnsServices.getById(id);
