@@ -7,8 +7,13 @@ transformers
 torch
 pillow
 opencv-python
-numpy
 openai
 python-multipart
 python-dotenv
 pydantic
+sentence-transformers
+scikit-learn
+language-tool-python
+keybert
+spacy
+# python -m spacy download en_core_web_sm
