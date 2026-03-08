@@ -14,10 +14,11 @@ import StudentRegister from '../pages/auth/StudentRegister';
 import TeacherDashboard from '../pages/teacher/TeacherDashboard';
 import TeacherSubmissions from '../pages/teacher/TeacherSubmissions';
 import TeacherUploadStudentAnswer from '../pages/teacher/TeacherUploadStudentAnswer';
+import FacultyProfile from '../pages/teacher/FacultyProfile';
 
 // Student pages
 import StudentDashboard from '../pages/student/StudentDashboard';
-import StudentAnswerUpload from '../pages/student/StudentAnswerUpload';
+import StudentProfile from '../pages/student/StudentProfile';
 
 const AppRoutes = () => {
   return (
@@ -91,6 +92,17 @@ const AppRoutes = () => {
         }
       />
 
+      <Route
+        path="/teacher/profile"
+        element={
+          <ProtectedRoute requiredRole="ROLE_TEACHER">
+            <DashboardLayout userType="teacher">
+              <FacultyProfile />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
       {/* ===== STUDENT ROUTES (Protected with Layout) ===== */}
       <Route
         path="/student/dashboard"
@@ -103,21 +115,11 @@ const AppRoutes = () => {
         }
       />
       <Route
-        path="/student/upload-answer"
+        path="/student/profile"
         element={
           <ProtectedRoute requiredRole="ROLE_STUDENT">
             <DashboardLayout userType="student">
-              <StudentAnswerUpload />
-            </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/student/upload-answer/:questionId"
-        element={
-          <ProtectedRoute requiredRole="ROLE_STUDENT">
-            <DashboardLayout userType="student">
-              <StudentAnswerUpload />
+              <StudentProfile />
             </DashboardLayout>
           </ProtectedRoute>
         }

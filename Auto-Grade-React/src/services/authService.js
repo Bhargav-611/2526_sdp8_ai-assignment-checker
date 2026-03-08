@@ -2,11 +2,11 @@ import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
-// Use sessionStorage so a full browser close clears auth
+// Use localStorage so token persists across tab closes & page refreshes
 const storage = {
-  getItem: (key) => sessionStorage.getItem(key),
-  setItem: (key, value) => sessionStorage.setItem(key, value),
-  removeItem: (key) => sessionStorage.removeItem(key),
+  getItem: (key) => localStorage.getItem(key),
+  setItem: (key, value) => localStorage.setItem(key, value),
+  removeItem: (key) => localStorage.removeItem(key),
 };
 
 class AuthService {
@@ -20,16 +20,16 @@ class AuthService {
       const { token, ...userData } = response.data.data;
       storage.setItem('token', token);
       storage.setItem('user', JSON.stringify(userData));
-      
+
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
+
       return {
         success: true,
         user: userData,
         token,
       };
     }
-    
+
     throw new Error(response.data.message || 'Login failed');
   }
 
@@ -48,16 +48,16 @@ class AuthService {
       const { token, ...userData } = response.data.data;
       storage.setItem('token', token);
       storage.setItem('user', JSON.stringify(userData));
-      
+
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
+
       return {
         success: true,
         user: userData,
         token,
       };
     }
-    
+
     throw new Error(response.data.message || 'Registration failed');
   }
 
@@ -76,16 +76,16 @@ class AuthService {
       const { token, ...userData } = response.data.data;
       storage.setItem('token', token);
       storage.setItem('user', JSON.stringify(userData));
-      
+
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
+
       return {
         success: true,
         user: userData,
         token,
       };
     }
-    
+
     throw new Error(response.data.message || 'Registration failed');
   }
 

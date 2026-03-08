@@ -11,11 +11,11 @@ export const useAuth = () => {
   return context;
 };
 
-// Storage helper – use sessionStorage so closing the browser clears the session
+// Storage helper – localStorage so token survives tab closes & refreshes
 const storage = {
-  getItem: (key) => sessionStorage.getItem(key),
-  setItem: (key, value) => sessionStorage.setItem(key, value),
-  removeItem: (key) => sessionStorage.removeItem(key),
+  getItem: (key) => localStorage.getItem(key),
+  setItem: (key, value) => localStorage.setItem(key, value),
+  removeItem: (key) => localStorage.removeItem(key),
 };
 
 export const AuthProvider = ({ children }) => {
@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
     // Check if user is already logged in in this browser session
     const token = storage.getItem('token');
     const userData = storage.getItem('user');
-    
+
     if (token && userData) {
       try {
         const parsedUser = JSON.parse(userData);
@@ -43,9 +43,9 @@ export const AuthProvider = ({ children }) => {
     const handleUnauthorized = () => {
       setUser(null);
     };
-    
+
     window.addEventListener('unauthorized', handleUnauthorized);
-    
+
     return () => {
       window.removeEventListener('unauthorized', handleUnauthorized);
     };

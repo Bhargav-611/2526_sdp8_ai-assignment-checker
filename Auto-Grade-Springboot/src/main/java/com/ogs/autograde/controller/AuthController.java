@@ -7,6 +7,7 @@ import com.ogs.autograde.payloads.RegisterRequest;
 import com.ogs.autograde.services.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
@@ -79,6 +80,14 @@ public class AuthController {
                             .message(e.getMessage())
                             .build()
             );
+        } catch (DataIntegrityViolationException e) {
+            log.warn("Database constraint violation during faculty registration: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    ApiResponse.builder()
+                            .success(false)
+                            .message("Registration failed: An account with this email address already exists.")
+                            .build()
+            );
         } catch (Exception e) {
             log.error("Faculty registration error: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
@@ -112,6 +121,23 @@ public class AuthController {
                     ApiResponse.builder()
                             .success(false)
                             .message(e.getMessage())
+                            .build()
+            );
+        } catch (DataIntegrityViolationException e) {
+            log.warn("Database constraint violation during student registration: {}", e.getMessage());
+            String errorMessage = "Registration failed: An account with this email or roll number already exists.";
+            if (e.getMostSpecificCause() != null && e.getMostSpecificCause().getMessage() != null) {
+                String specificCause = e.getMostSpecificCause().getMessage().toLowerCase();
+                if (specificCause.contains("roll_number") || specificCause.contains("roll number")) {
+                    errorMessage = "Registration failed: This roll number is already registered.";
+                } else if (specificCause.contains("email")) {
+                    errorMessage = "Registration failed: This email address is already registered.";
+                }
+            }
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    ApiResponse.builder()
+                            .success(false)
+                            .message(errorMessage)
                             .build()
             );
         } catch (Exception e) {

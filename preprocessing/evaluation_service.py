@@ -7,14 +7,6 @@ import numpy as np
 from typing import Dict, Tuple
 import os
 import re
-import google.generativeai as genai
-from dotenv import load_dotenv
-
-load_dotenv()
-
-# Setup Gemini API Key
-api_key = os.getenv("GEMINI_API_KEY")
-genai.configure(api_key=api_key)
 
 # =========================================================
 # 1️⃣ Initialize Models (loaded once)
@@ -303,14 +295,23 @@ def evaluate_answer(
 
     marks = calculate_marks(accuracy, max_marks)
 
+    # Build human-readable evaluation string (Spring Boot deserializes as String)
+    rubric_keys = ", ".join(rubric.keys()) if rubric else "N/A"
+    evaluation_text = (
+        f"Semantic Similarity: {semantic:.1f}% | "
+        f"Rubric Score: {rubric_marks:.1f}/{max_marks} | "
+        f"Length Factor: {length_factor:.1f} | "
+        f"Key Concepts: {rubric_keys}"
+    )
+
     return {
         "accuracy": accuracy,
         "marks": marks,
         "max_marks": max_marks,
-        "evaluation": {
-            "semantic_similarity": semantic,
-            "rubric_marks": rubric_marks,
-            "length_factor": length_factor,
-            "rubric": rubric,
-        },
+        "evaluation": evaluation_text,
+        "student_answer_clean": student_clean,   # grammar-corrected version
+        "semantic_similarity": round(semantic, 2),
+        "rubric_marks": round(rubric_marks, 2),
+        "length_factor": round(length_factor, 2),
+        "rubric": rubric,
     }
