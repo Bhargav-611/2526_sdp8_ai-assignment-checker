@@ -93,7 +93,6 @@ public class StudentAnsQuesServicesImp implements StudentQuesAnsServices {
         try {
             response = ocrService.evolutionOfAi(studentQuesAns);
         } catch (Exception e) {
-            // Log and provide fallback values
             System.err.println("Error calling AI service: " + e.getMessage());
         }
 
@@ -101,15 +100,25 @@ public class StudentAnsQuesServicesImp implements StudentQuesAnsServices {
             studentQuesAns.setEvolution("AI evaluation unavailable");
             studentQuesAns.setAnswer_mark(0);
             studentQuesAns.setAnswer("");
+            studentQuesAns.setAnswerClean("");
+            studentQuesAns.setAccuracy_cmp(0);
         } else {
             studentQuesAns.setEvolution(response.getEvaluation());
-            studentQuesAns.setAnswer_mark(response.getMarks());
+            studentQuesAns.setAnswer_mark((float) response.getMarks());
             studentQuesAns.setAnswer(response.getStudent_answer());
-            System.out.println(response.getAccuracy());
+            // save grammar-corrected version (used in UI as "Cleaned Text")
+            studentQuesAns.setAnswerClean(
+                response.getStudent_answer_clean() != null
+                    ? response.getStudent_answer_clean()
+                    : response.getStudent_answer()
+            );
+            studentQuesAns.setAccuracy_cmp((float) response.getAccuracy());
+            System.out.println("AI Marks: " + response.getMarks() + " | Accuracy: " + response.getAccuracy() + "%");
         }
 
         return studentQuesAnsRepo.save(studentQuesAns);
     }
+
 
     @Override
     public ResponseEntity<?> getByStudentId(Long id) {

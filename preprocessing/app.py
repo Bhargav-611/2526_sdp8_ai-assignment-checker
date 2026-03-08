@@ -1,5 +1,5 @@
 from ocr_service import image_to_text_extraction
-from evaluation_service_change import evaluate_answer
+from evaluation_service import evaluate_answer
 from fastapi import FastAPI
 from pydantic import BaseModel
 
@@ -68,4 +68,7 @@ def evaluate_from_image_path(req: EvaluatePathRequest):
         req.question, req.model_answer, student_answer, req.max_marks
     )
 
+    # result now includes: accuracy, marks, max_marks, evaluation (str),
+    # student_answer_clean, semantic_similarity, rubric_marks, length_factor, rubric
     return {"image_path": req.image_path, "student_answer": student_answer, **result}
+
