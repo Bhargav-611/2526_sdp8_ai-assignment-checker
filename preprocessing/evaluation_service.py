@@ -5,7 +5,16 @@ import spacy
 from keybert import KeyBERT
 import numpy as np
 from typing import Dict, Tuple
+import os
+import re
+import google.generativeai as genai
+from dotenv import load_dotenv
 
+load_dotenv()
+
+# Setup Gemini API Key
+api_key = os.getenv("GEMINI_API_KEY")
+genai.configure(api_key=api_key)
 
 # =========================================================
 # 1️⃣ Initialize Models (loaded once)
@@ -38,7 +47,6 @@ def clean_text(text: str) -> str:
         matches = tool.check(text)
         corrected = language_tool_python.utils.correct(text, matches)
         return corrected.lower().strip()
-
     except Exception:
         return text.lower().strip()
 
@@ -210,11 +218,8 @@ def final_accuracy(
     """
     Combine semantic similarity + rubric scoring.
     """
-
     rubric_percent = (rubric_marks / max_marks) * 100
-
     score = semantic * 0.6 + rubric_percent * 0.3 + (length_factor * 100) * 0.1
-
     return int(score)
 
 
@@ -227,7 +232,6 @@ def calculate_marks(accuracy: int, max_marks: int) -> float:
     """
     Convert accuracy percentage into exam marks.
     """
-
     if accuracy >= 90:
         return float(max_marks)
 

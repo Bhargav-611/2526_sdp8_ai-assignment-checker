@@ -2,6 +2,13 @@ import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
+// Use sessionStorage so a full browser close clears auth
+const storage = {
+  getItem: (key) => sessionStorage.getItem(key),
+  setItem: (key, value) => sessionStorage.setItem(key, value),
+  removeItem: (key) => sessionStorage.removeItem(key),
+};
+
 class AuthService {
   async login(email, password) {
     const response = await axios.post(`${API_BASE_URL}/auth/login`, {
@@ -11,10 +18,9 @@ class AuthService {
 
     if (response.data.success && response.data.data) {
       const { token, ...userData } = response.data.data;
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(userData));
+      storage.setItem('token', token);
+      storage.setItem('user', JSON.stringify(userData));
       
-      // Set default authorization header for all future requests
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       
       return {
@@ -40,10 +46,9 @@ class AuthService {
 
     if (response.data.success && response.data.data) {
       const { token, ...userData } = response.data.data;
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(userData));
+      storage.setItem('token', token);
+      storage.setItem('user', JSON.stringify(userData));
       
-      // Set default authorization header
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       
       return {
@@ -69,10 +74,9 @@ class AuthService {
 
     if (response.data.success && response.data.data) {
       const { token, ...userData } = response.data.data;
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(userData));
+      storage.setItem('token', token);
+      storage.setItem('user', JSON.stringify(userData));
       
-      // Set default authorization header
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       
       return {
@@ -86,17 +90,17 @@ class AuthService {
   }
 
   logout() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    storage.removeItem('token');
+    storage.removeItem('user');
     delete axios.defaults.headers.common['Authorization'];
   }
 
   getToken() {
-    return localStorage.getItem('token');
+    return storage.getItem('token');
   }
 
   getUser() {
-    const userData = localStorage.getItem('user');
+    const userData = storage.getItem('user');
     return userData ? JSON.parse(userData) : null;
   }
 
@@ -126,10 +130,8 @@ axios.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Only logout if it's not a login request
       if (!error.config.url.includes('/auth/login')) {
         authService.logout();
-        // Use event to notify app instead of direct redirect
         window.dispatchEvent(new Event('unauthorized'));
       }
     }

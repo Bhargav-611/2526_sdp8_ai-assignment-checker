@@ -89,12 +89,26 @@ public class StudentAnsQuesServicesImp implements StudentQuesAnsServices {
     public StudentQuesAns AiEvolutionBy(Long id)
     {
         StudentQuesAns studentQuesAns = findById(id);
-        AiResponse response = ocrService.evolutionOfAi(studentQuesAns);
-        studentQuesAns.setEvolution(response.getEvaluation());
-        studentQuesAns.setAnswer_mark(response.getMarks());
-        studentQuesAns.setAnswer(response.getStudent_answer());
-        System.out.println(response.getAccuracy());
-        return  studentQuesAnsRepo.save(studentQuesAns);
+        AiResponse response = null;
+        try {
+            response = ocrService.evolutionOfAi(studentQuesAns);
+        } catch (Exception e) {
+            // Log and provide fallback values
+            System.err.println("Error calling AI service: " + e.getMessage());
+        }
+
+        if (response == null || response.getEvaluation() == null) {
+            studentQuesAns.setEvolution("AI evaluation unavailable");
+            studentQuesAns.setAnswer_mark(0);
+            studentQuesAns.setAnswer("");
+        } else {
+            studentQuesAns.setEvolution(response.getEvaluation());
+            studentQuesAns.setAnswer_mark(response.getMarks());
+            studentQuesAns.setAnswer(response.getStudent_answer());
+            System.out.println(response.getAccuracy());
+        }
+
+        return studentQuesAnsRepo.save(studentQuesAns);
     }
 
     @Override

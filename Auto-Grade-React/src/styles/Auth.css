@@ -2,9 +2,10 @@
 .auth-container {
   min-height: 100vh;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  padding: 20px;
+  justify-content: flex-start;
+  padding: 32px 20px 20px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
@@ -31,7 +32,7 @@
 
 .auth-header {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
 .auth-header h1 {
@@ -44,6 +45,12 @@
 .auth-header p {
   font-size: 16px;
   color: #718096;
+}
+
+.auth-box {
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .auth-form {
@@ -315,4 +322,38 @@
   padding: 40px;
   color: #718096;
   font-size: 16px;
+}
+
+/* Login specific layout */
+.login-form {
+  max-width: 420px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.login-header {
+  text-align: left;
+  margin-bottom: 24px;
+}
+
+.login-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a202c;
+  margin-bottom: 6px;
+}
+
+.login-subtitle {
+  font-size: 14px;
+  color: #718096;
+  line-height: 1.6;
+}
+
+.login-role-highlight {
+  font-weight: 600;
+  color: #4c51bf;
+}
+
+.login-submit {
+  width: 100%;
 }

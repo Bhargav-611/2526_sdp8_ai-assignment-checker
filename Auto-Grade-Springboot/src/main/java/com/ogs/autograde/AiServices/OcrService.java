@@ -59,13 +59,31 @@ public class OcrService {
         HttpEntity<AiRequest> entity =
                 new HttpEntity<>(request, headers);
 
-        ResponseEntity<AiResponse> response =
-                restTemplate.postForEntity(
-                        EVOUTIONOFAI_URL,
-                        entity,
-                        AiResponse.class
-                );
-        return response.getBody();
+                try {
+                        ResponseEntity<AiResponse> response = restTemplate.postForEntity(
+                                        EVOUTIONOFAI_URL,
+                                        entity,
+                                        AiResponse.class
+                        );
+                        return response.getBody();
+                } catch (org.springframework.web.client.ResourceAccessException e) {
+                        // Connection refused / timeout
+                        System.err.println("AI service connection failed: " + e.getMessage());
+                        AiResponse fallback = new AiResponse();
+                        fallback.setEvaluation("AI service unavailable");
+                        fallback.setMarks(0);
+                        fallback.setStudent_answer("");
+                        fallback.setAccuracy(0.0);
+                        return fallback;
+                } catch (org.springframework.web.client.RestClientException e) {
+                        System.err.println("AI service error: " + e.getMessage());
+                        AiResponse fallback = new AiResponse();
+                        fallback.setEvaluation("AI service error");
+                        fallback.setMarks(0);
+                        fallback.setStudent_answer("");
+                        fallback.setAccuracy(0.0);
+                        return fallback;
+                }
     }
 
 }
