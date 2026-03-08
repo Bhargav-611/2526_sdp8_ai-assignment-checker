@@ -2,13 +2,16 @@ package com.ogs.autograde.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.WeakKeyException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
+import jakarta.annotation.PostConstruct;
 import java.security.Key;
+import java.util.Base64;
 import java.util.Date;
 import java.util.stream.Collectors;
 
@@ -16,27 +19,57 @@ import java.util.stream.Collectors;
 @Slf4j
 public class JwtTokenProvider {
 
-    @Value("${jwt.secret}")
+    @Value("${jwt.secret:}")
     private String jwtSecret;
 
     @Value("${jwt.expiration}")
     private long jwtExpirationMs;
 
-    private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(jwtSecret.getBytes());
+    private Key signingKey;
+
+    @PostConstruct
+    private void init() {
+        if (jwtSecret == null || jwtSecret.isBlank()) {
+            // No secret provided → generate a secure ephemeral 512-bit key
+            signingKey = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+            log.warn("No jwt.secret configured — generated an ephemeral secure key for HS512. "
+                    + "Tokens won't survive application restarts. "
+                    + "Set `jwt.secret` to a Base64-encoded 512-bit key to persist tokens.");
+            return;
+        }
+
+        try {
+            // Decode Base64 secret
+            byte[] keyBytes = Base64.getDecoder().decode(jwtSecret);
+            signingKey = Keys.hmacShaKeyFor(keyBytes); // will throw WeakKeyException if too short
+        } catch (IllegalArgumentException e) {
+            log.error("JWT secret is not valid Base64: {}", e.getMessage());
+            generateFallbackKey();
+        } catch (WeakKeyException e) {
+            log.error("JWT secret is too weak for HS512: {}", e.getMessage());
+            generateFallbackKey();
+        }
     }
 
-    /**
-     * Generate JWT token from Authentication object
-     */
+    private void generateFallbackKey() {
+        signingKey = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+        log.warn("Generated a secure ephemeral key because provided secret was insufficient. "
+                + "Use a Base64-encoded 512-bit (or larger) key in `jwt.secret` to persist tokens.");
+    }
+
+    private Key getSigningKey() {
+        return signingKey;
+    }
+
+    // Generate token from Authentication object
     public String generateToken(Authentication authentication) {
         String username = authentication.getName();
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
-
         String roles = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
+
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
 
         return Jwts.builder()
                 .setSubject(username)
@@ -47,9 +80,7 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    /**
-     * Generate JWT token from username and roles
-     */
+    // Generate token from username and roles
     public String generateTokenFromUsername(String username, String roles) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
@@ -63,9 +94,7 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    /**
-     * Get username from JWT token
-     */
+    // Get username from token
     public String getUsernameFromToken(String token) {
         try {
             return Jwts.parserBuilder()
@@ -80,9 +109,7 @@ public class JwtTokenProvider {
         }
     }
 
-    /**
-     * Get roles from JWT token
-     */
+    // Get roles from token
     public String getRolesFromToken(String token) {
         try {
             return (String) Jwts.parserBuilder()
@@ -97,9 +124,7 @@ public class JwtTokenProvider {
         }
     }
 
-    /**
-     * Validate JWT token
-     */
+    // Validate token
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder()

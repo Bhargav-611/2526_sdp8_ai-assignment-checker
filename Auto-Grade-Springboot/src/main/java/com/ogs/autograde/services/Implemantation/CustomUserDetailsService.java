@@ -6,8 +6,6 @@ import com.ogs.autograde.models.Faculty;
 import com.ogs.autograde.models.Role;
 import com.ogs.autograde.models.Student;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import org.springframework.boot.webmvc.autoconfigure.WebMvcProperties;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

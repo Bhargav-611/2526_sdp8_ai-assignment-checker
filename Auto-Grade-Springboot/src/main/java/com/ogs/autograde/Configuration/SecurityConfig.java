@@ -29,8 +29,8 @@ public class SecurityConfig {
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
 
     public SecurityConfig(@Qualifier("userDetailsServiceImpl") UserDetailsService userDetailsService,
-                         JwtAuthenticationFilter jwtAuthFilter,
-                         JwtAuthenticationEntryPoint authenticationEntryPoint) {
+                          JwtAuthenticationFilter jwtAuthFilter,
+                          JwtAuthenticationEntryPoint authenticationEntryPoint) {
         this.userDetailsService = userDetailsService;
         this.jwtAuthFilter = jwtAuthFilter;
         this.authenticationEntryPoint = authenticationEntryPoint;
@@ -43,8 +43,9 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService); // ⚡ correct
+        authProvider.setPasswordEncoder(passwordEncoder());     // ⚡ correct
         return authProvider;
     }
 
@@ -61,9 +62,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/api/facultyquesans/**").permitAll() // Allow students to view questions
-                        .requestMatchers("/api/questions/**").permitAll() // Allow answer uploads and evaluations
-                        .requestMatchers("/api/student/all").hasRole("TEACHER") // Teachers can view all students
+                        .requestMatchers("/api/facultyquesans/**").permitAll()
+                        .requestMatchers("/api/questions/**").permitAll()
+                        .requestMatchers("/api/student/all").hasRole("TEACHER")
                         .requestMatchers("/api/faculty/**").hasRole("TEACHER")
                         .requestMatchers("/api/student/**").hasRole("STUDENT")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
