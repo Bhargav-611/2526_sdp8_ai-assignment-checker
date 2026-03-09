@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
+import Select from 'react-select';
 import { useAuth } from '../../context/AuthContext';
 import { API_ENDPOINTS } from '../../config/api';
 import '../../styles/Dashboard.css';
@@ -49,9 +50,8 @@ const TeacherUploadStudentAnswer = () => {
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((p) => ({ ...p, [name]: value }));
+  const handleSelectChange = (name, selectedOption) => {
+    setFormData((p) => ({ ...p, [name]: selectedOption ? selectedOption.value : '' }));
     if (errors[name]) setErrors((p) => ({ ...p, [name]: '' }));
     if (message.text) setMessage({ type: '', text: '' });
   };
@@ -152,15 +152,48 @@ const TeacherUploadStudentAnswer = () => {
             ) : questions.length === 0 ? (
               <p className="helper-text">No questions available. Please create a question first.</p>
             ) : (
-              <select id="question_id" name="question_id" value={formData.question_id}
-                onChange={handleChange} className={errors.question_id ? 'error' : ''}>
-                <option value="">-- Select a Question --</option>
-                {questions.map((q) => (
-                  <option key={q.id} value={q.id}>
-                    Q{q.id}: {q.question.substring(0, 60)}... ({q.max_mark} marks)
-                  </option>
-                ))}
-              </select>
+              <Select
+                id="question_id"
+                name="question_id"
+                value={questions.map(q => ({ value: q.id, label: `Q${q.id}: ${q.question.substring(0, 60)}... (${q.max_mark} marks)` })).find(opt => opt.value === formData.question_id) || null}
+                onChange={(option) => handleSelectChange('question_id', option)}
+                options={questions.map((q) => ({
+                  value: q.id,
+                  label: `Q${q.id}: ${q.question.substring(0, 60)}... (${q.max_mark} marks)`
+                }))}
+                isSearchable={true}
+                placeholder="-- Search or Select a Question --"
+                className={`react-select-container ${errors.question_id ? 'error' : ''}`}
+                classNamePrefix="react-select"
+                styles={{
+                  control: (baseStyles, state) => ({
+                    ...baseStyles,
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    borderColor: errors.question_id ? 'var(--error-color)' : state.isFocused ? 'var(--accent-blue)' : 'rgba(255, 255, 255, 0.2)',
+                    color: 'white',
+                    padding: '2px',
+                  }),
+                  menu: (baseStyles) => ({
+                    ...baseStyles,
+                    backgroundColor: '#1E1E2F',
+                    zIndex: 100
+                  }),
+                  option: (baseStyles, state) => ({
+                    ...baseStyles,
+                    backgroundColor: state.isFocused ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                    color: 'var(--text-main)',
+                    cursor: 'pointer'
+                  }),
+                  singleValue: (baseStyles) => ({
+                    ...baseStyles,
+                    color: 'var(--text-main)',
+                  }),
+                  input: (baseStyles) => ({
+                    ...baseStyles,
+                    color: 'var(--text-main)',
+                  }),
+                }}
+              />
             )}
             {errors.question_id && <span className="error-message">{errors.question_id}</span>}
           </div>
@@ -186,15 +219,48 @@ const TeacherUploadStudentAnswer = () => {
             ) : students.length === 0 ? (
               <p className="helper-text">No students registered yet.</p>
             ) : (
-              <select id="student_id" name="student_id" value={formData.student_id}
-                onChange={handleChange} className={errors.student_id ? 'error' : ''}>
-                <option value="">-- Select a Student --</option>
-                {students.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name} — Roll: {s.rollNumber} ({s.email})
-                  </option>
-                ))}
-              </select>
+              <Select
+                id="student_id"
+                name="student_id"
+                value={students.map(s => ({ value: s.id, label: `${s.name} — Roll: ${s.rollNumber} (${s.email})` })).find(opt => opt.value === formData.student_id) || null}
+                onChange={(option) => handleSelectChange('student_id', option)}
+                options={students.map((s) => ({
+                  value: s.id,
+                  label: `${s.name} — Roll: ${s.rollNumber} (${s.email})`
+                }))}
+                isSearchable={true}
+                placeholder="-- Search or Select a Student --"
+                className={`react-select-container ${errors.student_id ? 'error' : ''}`}
+                classNamePrefix="react-select"
+                styles={{
+                  control: (baseStyles, state) => ({
+                    ...baseStyles,
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    borderColor: errors.student_id ? 'var(--error-color)' : state.isFocused ? 'var(--accent-blue)' : 'rgba(255, 255, 255, 0.2)',
+                    color: 'white',
+                    padding: '2px',
+                  }),
+                  menu: (baseStyles) => ({
+                    ...baseStyles,
+                    backgroundColor: '#1E1E2F',
+                    zIndex: 100
+                  }),
+                  option: (baseStyles, state) => ({
+                    ...baseStyles,
+                    backgroundColor: state.isFocused ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                    color: 'var(--text-main)',
+                    cursor: 'pointer'
+                  }),
+                  singleValue: (baseStyles) => ({
+                    ...baseStyles,
+                    color: 'var(--text-main)',
+                  }),
+                  input: (baseStyles) => ({
+                    ...baseStyles,
+                    color: 'var(--text-main)',
+                  }),
+                }}
+              />
             )}
             {errors.student_id && <span className="error-message">{errors.student_id}</span>}
           </div>

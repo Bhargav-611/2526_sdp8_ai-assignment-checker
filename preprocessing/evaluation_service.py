@@ -1,19 +1,18 @@
-import language_tool_python
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 import spacy
 from keybert import KeyBERT
 import numpy as np
-from typing import Dict, Tuple
 import os
 import re
+import time
+import json
+from typing import Dict, Tuple, Any
 
 # =========================================================
 # 1️⃣ Initialize Models (loaded once)
 # =========================================================
 
-# Grammar correction tool
-tool = language_tool_python.LanguageTool("en-US")
 
 # Sentence embedding model
 model = SentenceTransformer("all-MiniLM-L6-v2")
@@ -31,16 +30,19 @@ nlp = spacy.load("en_core_web_sm")
 
 def clean_text(text: str) -> str:
     """
-    Clean and normalize text.
-    - Fix grammar
-    - Convert to lowercase
+    Fast text cleaning for OCR output.
+    - lowercase
+    - remove extra spaces
+    - remove strange chars
     """
-    try:
-        matches = tool.check(text)
-        corrected = language_tool_python.utils.correct(text, matches)
-        return corrected.lower().strip()
-    except Exception:
-        return text.lower().strip()
+
+    text = text.lower()
+
+    text = re.sub(r"[^a-z0-9\s]", " ", text)
+
+    text = re.sub(r"\s+", " ", text)
+
+    return text.strip()
 
 
 # =========================================================
@@ -90,7 +92,7 @@ def generate_rubric(model_answer: str, max_marks: int) -> Dict[str, float]:
     # Step 2: Extract key phrases
     # -----------------------------
     keywords = kw_model.extract_keywords(
-        model_answer, keyphrase_ngram_range=(1, 3), stop_words="english", top_n=8
+        model_answer, keyphrase_ngram_range=(1, 1), stop_words="english", top_n=10
     )
 
     keyword_phrases = [k[0].lower() for k in keywords]
@@ -100,23 +102,11 @@ def generate_rubric(model_answer: str, max_marks: int) -> Dict[str, float]:
     # -----------------------------
     concepts = list(set(noun_phrases + keyword_phrases))
 
-    # -----------------------------
-    # Step 4: Remove generic terms
-    # -----------------------------
-    banned_words = {"tcp", "protocol", "data", "system", "method", "process"}
 
     filtered = []
 
     for concept in concepts:
         words = concept.split()
-
-        # remove very short concepts
-        if len(words) < 2:
-            continue
-
-        # remove banned terms
-        if any(word in banned_words for word in words):
-            continue
 
         filtered.append(concept)
 
@@ -159,19 +149,42 @@ def generate_rubric(model_answer: str, max_marks: int) -> Dict[str, float]:
 
 def rubric_score(student_ans: str, rubric: Dict[str, float]) -> float:
     """
-    Score student answer based on detected concepts.
+    Improved concept scoring.
 
-    Instead of exact keyword match, we check
-    semantic similarity between concept and student answer.
+    - compare concept with each sentence / chunk
+    - helps OCR text
+    - helps wrong spelling
+    - helps long answers
     """
 
     total = 0
 
-    for concept, marks in rubric.items():
-        similarity = semantic_similarity(concept, student_ans)
+    # split into chunks (fast)
+    parts = re.split(r"[.,;:\n]", student_ans)
 
-        if similarity >= 55:
+    for concept, marks in rubric.items():
+
+        best_similarity = 0
+
+        for part in parts:
+
+            part = part.strip()
+
+            if not part:
+                continue
+
+            sim = semantic_similarity(concept, part)
+
+            if sim > best_similarity:
+                best_similarity = sim
+
+        # strong match
+        if best_similarity >= 60:
             total += marks
+
+        # partial match
+        elif best_similarity >= 45:
+            total += marks * 0.5
 
     return total
 
@@ -205,13 +218,24 @@ def length_penalty(model_ans: str, student_ans: str) -> float:
 
 
 def final_accuracy(
-    semantic: float, rubric_marks: float, max_marks: int, length_factor: float
-) -> int:
-    """
-    Combine semantic similarity + rubric scoring.
-    """
+    semantic,
+    rubric_marks,
+    max_marks,
+    length_factor,
+):
+
     rubric_percent = (rubric_marks / max_marks) * 100
-    score = semantic * 0.6 + rubric_percent * 0.3 + (length_factor * 100) * 0.1
+
+    # fallback when rubric fails
+    if rubric_marks == 0 and semantic > 60:
+        rubric_percent = semantic * 0.5
+
+    score = (
+        semantic * 0.7 +
+        rubric_percent * 0.2 +
+        (length_factor * 100) * 0.1
+    )
+
     return int(score)
 
 
@@ -220,24 +244,13 @@ def final_accuracy(
 # =========================================================
 
 
-def calculate_marks(accuracy: int, max_marks: int) -> float:
-    """
-    Convert accuracy percentage into exam marks.
-    """
-    if accuracy >= 90:
-        return float(max_marks)
+def calculate_marks(accuracy, max_marks):
 
-    elif accuracy >= 75:
-        return round(max_marks * 0.75, 2)
+    percent = accuracy / 100
 
-    elif accuracy >= 50:
-        return round(max_marks * 0.5, 2)
+    marks = percent * max_marks
 
-    elif accuracy >= 30:
-        return round(max_marks * 0.25, 2)
-
-    else:
-        return 0.0
+    return round(marks, 2)
 
 
 # =========================================================
@@ -315,3 +328,77 @@ def evaluate_answer(
         "length_factor": round(length_factor, 2),
         "rubric": rubric,
     }
+
+# =========================================================
+# 🔟 Streaming Evaluation Pipeline
+# =========================================================
+
+def stream_evaluate_answer(
+    question: str, model_answer: str, student_answer: str, max_marks: int
+) -> Any:
+    """
+    Generator that yields progress events as JSON strings.
+    """
+    start_time = time.time()
+    
+    def yield_event(step: str, status: str, time_ms: float = 0, data: Dict = None):
+        event = {"step": step, "status": status, "time_ms": round(time_ms, 2)}
+        if data:
+            event["data"] = data
+        return json.dumps(event) + "\n"
+
+    # --- Step 1: Clean text ---
+    yield yield_event("cleaning", "running")
+    step_start = time.time()
+    model_clean = clean_text(model_answer)
+    student_clean = clean_text(student_answer)
+    step_time = (time.time() - step_start) * 1000
+    yield yield_event("cleaning", "done", step_time)
+
+    # --- Step 2: Semantic similarity ---
+    yield yield_event("semantic", "running")
+    step_start = time.time()
+    semantic = semantic_similarity(model_clean, student_clean)
+    step_time = (time.time() - step_start) * 1000
+    yield yield_event("semantic", "done", step_time)
+
+    # --- Step 3: Generate rubric automatically ---
+    yield yield_event("rubric", "running")
+    step_start = time.time()
+    rubric = generate_rubric(model_clean, max_marks)
+    step_time = (time.time() - step_start) * 1000
+    yield yield_event("rubric", "done", step_time)
+
+    # --- Step 4: Concept scoring ---
+    yield yield_event("scoring", "running")
+    step_start = time.time()
+    rubric_marks = rubric_score(student_clean, rubric)
+    length_factor = length_penalty(model_clean, student_clean)
+    accuracy = final_accuracy(semantic, rubric_marks, max_marks, length_factor)
+    marks = calculate_marks(accuracy, max_marks)
+    step_time = (time.time() - step_start) * 1000
+    yield yield_event("scoring", "done", step_time)
+
+    # --- Step 5: Finalizing ---
+    rubric_keys = ", ".join(rubric.keys()) if rubric else "N/A"
+    evaluation_text = (
+        f"Semantic Similarity: {semantic:.1f}% | "
+        f"Rubric Score: {rubric_marks:.1f}/{max_marks} | "
+        f"Length Factor: {length_factor:.1f} | "
+        f"Key Concepts: {rubric_keys}"
+    )
+
+    final_result = {
+        "accuracy": accuracy,
+        "marks": marks,
+        "max_marks": max_marks,
+        "evaluation": evaluation_text,
+        "student_answer_clean": student_clean,
+        "semantic_similarity": round(semantic, 2),
+        "rubric_marks": round(rubric_marks, 2),
+        "length_factor": round(length_factor, 2),
+        "rubric": rubric,
+    }
+    
+    total_time = (time.time() - start_time) * 1000
+    yield yield_event("final", "done", total_time, final_result)

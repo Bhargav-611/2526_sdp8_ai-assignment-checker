@@ -22,6 +22,10 @@ import com.ogs.autograde.services.StudentQuesAnsServices;
 import com.ogs.autograde.services.ImageService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import reactor.core.publisher.Flux;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Map;
 
 @Service
 public class StudentAnsQuesServicesImp implements StudentQuesAnsServices {
@@ -117,6 +121,60 @@ public class StudentAnsQuesServicesImp implements StudentQuesAnsServices {
         }
 
         return studentQuesAnsRepo.save(studentQuesAns);
+    }
+
+    public SseEmitter AiEvolutionStreamBy(Long id) {
+        StudentQuesAns studentQuesAns = findById(id);
+        SseEmitter emitter = new SseEmitter(180_000L); // 3-minute timeout
+        
+        if (studentQuesAns == null) {
+            emitter.completeWithError(new IllegalArgumentException("Submission not found"));
+            return emitter;
+        }
+
+        Flux<String> stream = ocrService.streamAiEvaluation(studentQuesAns);
+        ObjectMapper mapper = new ObjectMapper();
+
+        stream.subscribe(
+            data -> {
+                try {
+                    // Send to client
+                    emitter.send(SseEmitter.event().data(data));
+                    
+                    // Check if it's the final event to save marks
+                    Map<String, Object> map = mapper.readValue(data, Map.class);
+                    if ("final".equals(map.get("step")) && "done".equals(map.get("status"))) {
+                        Map<String, Object> finalData = (Map<String, Object>) map.get("data");
+                        if (finalData != null) {
+                            studentQuesAns.setEvolution((String) finalData.get("evaluation"));
+                            studentQuesAns.setAnswer_mark(((Number) finalData.get("marks")).floatValue());
+                            studentQuesAns.setAccuracy_cmp(((Number) finalData.get("accuracy")).floatValue());
+                            studentQuesAns.setAnswerClean((String) finalData.get("student_answer_clean"));
+                            studentQuesAnsRepo.save(studentQuesAns);
+                        }
+                    }
+                } catch (Exception e) {
+                    emitter.completeWithError(e);
+                }
+            },
+            error -> {
+                System.err.println("SSE Error: " + error.getMessage());
+                studentQuesAns.setEvolution("AI service error");
+                studentQuesAns.setAnswer_mark(0);
+                studentQuesAns.setAccuracy_cmp(0);
+                studentQuesAnsRepo.save(studentQuesAns);
+                try {
+                    emitter.send(SseEmitter.event().name("error").data("{\"error\": \"Streaming failed\"}"));
+                } catch (Exception ignored) {}
+                emitter.completeWithError(error);
+            },
+            () -> {
+                // Done
+                emitter.complete();
+            }
+        );
+
+        return emitter;
     }
 
 

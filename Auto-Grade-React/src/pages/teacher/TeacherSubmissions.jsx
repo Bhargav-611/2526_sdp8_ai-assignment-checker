@@ -22,6 +22,8 @@ const TeacherSubmissions = () => {
   const [message, setMessage] = useState({ type: '', text: '' });
   const [expandedId, setExpandedId] = useState(null);
   const [evaluating, setEvaluating] = useState(null);
+  const [evalStep, setEvalStep] = useState(0);
+  const [stepTimes, setStepTimes] = useState({});
   const [editingId, setEditingId] = useState(null);
   const [marksForm, setMarksForm] = useState({ answer_mark: '', evolution: '' });
 
@@ -77,19 +79,100 @@ const TeacherSubmissions = () => {
   const evaluated = submissions.filter(s => isEvaluated(s)).length;
   const pending = submissions.length - evaluated;
 
-  // ── actions ──────────────────────────────────────────────────
-  const handleAiEvaluate = async (id) => {
+  const handleAiEvaluate = (id) => {
     setEvaluating(id);
+    setEvalStep(0);
+    setStepTimes({});
     setMessage({ type: '', text: '' });
-    try {
-      await axios.post(API_ENDPOINTS.STUDENT_ANSWER_EVALUATE(id));
-      setMessage({ type: 'success', text: '✓ AI evaluation complete!' });
-      loadSubmissions();
-    } catch {
-      setMessage({ type: 'error', text: 'AI evaluation failed. Check the processing service.' });
-    } finally {
+
+    const token = localStorage.getItem('token');
+    // Using EventSource for Server-Sent Events. API_ENDPOINTS structure requires manual generic URL append
+    const sseUrl = `http://localhost:8080/api/questions/ai/stream/${id}`;
+
+    // We cannot easily pass headers to standard EventSource. 
+    // BUT we need JWT auth `/api/questions/...`.
+    // We must pass token as a query parameter or use fetch-event-source library.
+    // If Spring Boot doesn't support JWT in query, we need @microsoft/fetch-event-source.
+
+    // For now, let's try standard fetch reading the stream since EventSource natively doesn't support headers.
+    fetch(sseUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    }).then(async (response) => {
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        // chunk may contain multiple SSE events: "data: {...}\n\n"
+        const events = chunk.split('\n\n');
+
+        for (const ev of events) {
+          if (ev.startsWith('data:')) {
+            try {
+              const jsonStr = ev.replace('data:', '').trim();
+              if (!jsonStr) continue;
+
+              const data = JSON.parse(jsonStr);
+
+              const stepMap = {
+                'ocr': 1,
+                'cleaning': 2,
+                'semantic': 3,
+                'rubric': 3, // combine rubric with semantic in UI index 3 loosely or 4
+                'scoring': 4,
+                'final': 5
+              };
+
+              if (data.step in stepMap && data.status === 'running') {
+                setEvalStep(stepMap[data.step]);
+              }
+
+              if (data.status === 'done') {
+                setStepTimes(prev => ({ ...prev, [data.step]: data.time_ms }));
+                if (data.step === 'final') {
+                  setEvalStep(6);
+                  setMessage({ type: 'success', text: '✓ AI evaluation complete! Time: ' + (data.time_ms / 1000).toFixed(1) + 's' });
+                  // loadSubmissions(); <-- Removing this so it doesn't jump UI!
+
+                  // Optimistically update the single item instead
+                  setSubmissions(prev => prev.map(s => {
+                    if (s.id === id) {
+                      return {
+                        ...s,
+                        answer_mark: data.data.marks,
+                        evolution: data.data.evaluation,
+                        accuracy_cmp: data.data.accuracy
+                      };
+                    }
+                    return s;
+                  }));
+
+                  setTimeout(() => {
+                    setEvaluating(null);
+                    setEvalStep(0);
+                    setStepTimes({});
+                  }, 2500);
+
+                  return; // exit while loop fully
+                }
+              }
+            } catch (e) {
+              console.error("Parse error chunk:", ev, e);
+            }
+          }
+        }
+      }
+    }).catch(err => {
+      setMessage({ type: 'error', text: 'AI evaluation stream failed.' });
       setEvaluating(null);
-    }
+    });
   };
 
   const startEdit = (s) => {
@@ -207,8 +290,8 @@ const TeacherSubmissions = () => {
                 placeholder="Optional teacher comment..." />
             </div>
             <div className="submission-actions">
-              <button className="btn-primary" onClick={() => saveMarks(s.id, maxMarks)}>💾 Save</button>
-              <button className="btn-secondary" onClick={() => setEditingId(null)}>Cancel</button>
+              <button type="button" className="btn-primary" onClick={(e) => { e.preventDefault(); e.stopPropagation(); saveMarks(s.id, maxMarks); }}>💾 Save</button>
+              <button type="button" className="btn-secondary" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditingId(null); }}>Cancel</button>
             </div>
           </div>
         ) : (
@@ -230,18 +313,50 @@ const TeacherSubmissions = () => {
             )}
 
             <div className="submission-actions" style={{ marginTop: 14 }}>
-              <motion.button className="btn-primary"
-                onClick={() => handleAiEvaluate(s.id)}
+              <motion.button type="button" className="btn-primary"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleAiEvaluate(s.id); }}
                 disabled={evaluating === s.id}
                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 {evaluating === s.id ? '⏳ Evaluating...' : isEvaluated(s) ? '🔄 Re-evaluate' : '🤖 AI Evaluate'}
               </motion.button>
-              <motion.button className="btn-secondary"
-                onClick={() => startEdit(s)}
+              <motion.button type="button" className="btn-secondary"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); startEdit(s); }}
                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 {s.answer_mark > 0 ? '✏️ Override Marks' : '✏️ Set Manually'}
               </motion.button>
             </div>
+            {/* Real-time Progress Timeline UI */}
+            <AnimatePresence>
+              {evaluating === s.id && (
+                <motion.div initial={{ opacity: 0, height: 0, marginTop: 0 }} animate={{ opacity: 1, height: 'auto', marginTop: 16 }} exit={{ opacity: 0, height: 0, marginTop: 0 }} style={{ overflow: 'hidden' }}>
+                  <div className="eval-progress-container" style={{ padding: '12px 16px', background: 'rgba(0,0,0,0.2)', borderRadius: 8, borderLeft: '3px solid var(--accent-blue)' }}>
+                    <h4 style={{ marginBottom: 10, fontSize: 13, color: 'var(--text-accent)' }}>⚙️ AI Processing Steps</h4>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: 13, color: 'var(--text-main)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <li style={{ opacity: evalStep >= 0 ? 1 : 0.4, display: 'flex', justifyContent: 'space-between' }}>
+                        <span>{evalStep > 0 ? '✅' : '⏳'} 📷 Extracting handwriting via OCR</span>
+                        {stepTimes['ocr'] && <span style={{ color: 'var(--text-muted)' }}>{(stepTimes['ocr'] / 1000).toFixed(2)}s</span>}
+                      </li>
+                      <li style={{ opacity: evalStep >= 1 ? 1 : 0.4, display: 'flex', justifyContent: 'space-between' }}>
+                        <span>{evalStep > 1 ? '✅' : evalStep === 1 ? '⏳' : '⚪'} 🧹 Cleaning & normalizing text</span>
+                        {stepTimes['cleaning'] && <span style={{ color: 'var(--text-muted)' }}>{(stepTimes['cleaning'] / 1000).toFixed(2)}s</span>}
+                      </li>
+                      <li style={{ opacity: evalStep >= 2 ? 1 : 0.4, display: 'flex', justifyContent: 'space-between' }}>
+                        <span>{evalStep > 2 ? '✅' : evalStep === 2 ? '⏳' : '⚪'} 🧠 Analyzing semantic similarity</span>
+                        {stepTimes['semantic'] && <span style={{ color: 'var(--text-muted)' }}>{(stepTimes['semantic'] / 1000).toFixed(2)}s</span>}
+                      </li>
+                      <li style={{ opacity: evalStep >= 3 ? 1 : 0.4, display: 'flex', justifyContent: 'space-between' }}>
+                        <span>{evalStep > 3 ? '✅' : evalStep === 3 ? '⏳' : '⚪'} 📊 Generating rubric & scoring</span>
+                        {stepTimes['scoring'] && <span style={{ color: 'var(--text-muted)' }}>{(stepTimes['scoring'] / 1000).toFixed(2)}s</span>}
+                      </li>
+                      <li style={{ opacity: evalStep >= 4 ? 1 : 0.4, display: 'flex', justifyContent: 'space-between' }}>
+                        <span>{evalStep >= 5 ? '✅' : evalStep >= 4 ? '⏳' : '⚪'} ✅ Finalizing results</span>
+                        {stepTimes['final'] && <span style={{ color: 'var(--text-accent)', fontWeight: 'bold' }}>{(stepTimes['final'] / 1000).toFixed(2)}s Total</span>}
+                      </li>
+                    </ul>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </>
         )}
       </motion.div>
