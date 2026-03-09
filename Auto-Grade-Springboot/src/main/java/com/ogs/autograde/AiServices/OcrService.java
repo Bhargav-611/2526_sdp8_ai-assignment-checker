@@ -8,17 +8,22 @@ import com.ogs.autograde.models.StudentQuesAns;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 
 @Service
 public class OcrService {
 
     private final RestTemplate restTemplate;
+    private final WebClient webClient;
 
     private static final String OCR_URL = "http://localhost:8000/ocr-path";
     private static final String EVOUTIONOFAI_URL = "http://localhost:8000/evaluate-path";
+    private static final String EVOUTIONOFAI_STREAM_URL = "http://localhost:8000/evaluate-path-stream";
 
-    public OcrService(RestTemplate restTemplate) {
+    public OcrService(RestTemplate restTemplate, WebClient.Builder webClientBuilder) {
         this.restTemplate = restTemplate;
+        this.webClient = webClientBuilder.build();
     }
 
     public OcrUrlResponse extractText(String imageUrl) {
@@ -84,6 +89,21 @@ public class OcrService {
                         fallback.setAccuracy(0.0);
                         return fallback;
                 }
+    }
+
+    public Flux<String> streamAiEvaluation(StudentQuesAns studentQuesAns) {
+        AiRequest request = new AiRequest();
+        request.setImage_path(studentQuesAns.getPhoto().getUrl());
+        request.setModel_answer(studentQuesAns.getFacultyQuesAns().getAnswer());
+        request.setMax_marks(studentQuesAns.getFacultyQuesAns().getMax_mark());
+        request.setQuestion(studentQuesAns.getFacultyQuesAns().getQuestion());
+
+        return webClient.post()
+                .uri(EVOUTIONOFAI_STREAM_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .retrieve()
+                .bodyToFlux(String.class);
     }
 
 }

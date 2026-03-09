@@ -12,9 +12,12 @@ import com.ogs.autograde.services.StudentServices;
 import com.ogs.autograde.services.ImageService;
 import com.ogs.autograde.services.Implemantation.StudentAnsQuesServicesImp;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 
@@ -117,6 +120,12 @@ public class StudentQuesAnsController {
     public StudentQuesAns AiEvaluation(@PathVariable Long id)
     {
         return studentQuesAnsServices.AiEvolutionBy(id);
+    }
+
+    @GetMapping(value = "/ai/stream/{id}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter AiEvaluationStream(@PathVariable Long id)
+    {
+        return studentQuesAnsServices.AiEvolutionStreamBy(id);
     }
 
     @PutMapping("/update-marks/{id}")
